@@ -1,0 +1,73 @@
+/* Paleta de colores: #190019, #2B124C, #522B5B, #854F6C, #DFB6B2, #FBE4D8 */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #FBE4D8;
+    color: #190019;
+}
+
+header {
+    background-color: #2B124C;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left h1 {
+    margin: 0;
+    color: #DFB6B2;
+}
+
+.header-left .slogan {
+    margin: 0;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #854F6C;
+}
+
+.social-icons a img {
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    vertical-align: middle;
+    transition: transform 0.2s;
+}
+
+.social-icons a img:hover {
+    transform: scale(1.1);
+}
+
+main {
+    padding: 1rem 2rem;
+}
+
+#product-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.product {
+    border: 1px solid #522B5B;
+    padding: 1rem;
+    width: 200px;
+    background-color: #DFB6B2;
+    border-radius: 5px;
+    color: #190019;
+}
+
+.product h3 {
+    margin-top: 0;
+}
+
+footer {
+    background-color: #2B124C;
+    color: #FBE4D8;
+    text-align: center;
+    padding: 1rem;
+    margin-top: 2rem;
+}
