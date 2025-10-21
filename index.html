@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="es"> <!-- Idioma Español -->
+<html lang="es">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DC PHONE</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Nuevos estilos: mejora de colores y acentos sin cambiar estructura -->
   <style>
     :root{
       --dark:#190019;
@@ -19,14 +18,12 @@
       --card-shadow: 0 14px 40px rgba(25,0,25,0.10);
     }
 
-    /* Fondo y texto */
     body {
       background: radial-gradient(circle at 10% 10%, rgba(133,79,108,0.06), transparent 20%), var(--bg);
       color: var(--dark);
       -webkit-font-smoothing:antialiased;
     }
 
-    /* Header */
     header {
       background: linear-gradient(90deg, var(--deep), var(--mid));
       color: var(--soft);
@@ -35,28 +32,54 @@
     .header-left h1 { color: var(--soft); margin:0; }
     .header-left .slogan { color: var(--accent); margin:0; font-style:italic; }
 
-    /* Barra de búsqueda: input ligeramente más pequeño para dejar espacio al botón de categoría */
-    .search-bar { display:flex; gap:10px; margin-bottom:16px; align-items:center; }
+    /* Contenedor centrado para la barra de búsqueda */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .search-bar { 
+      display:flex; 
+      gap:15px; 
+      align-items:center;
+      justify-content: center;
+      max-width: 1000px; /* Más ancho */
+      width: 100%;
+    }
+
+    .logo-container {
+      flex-shrink: 0;
+    }
+
+    .store-logo {
+      height: 120px; /* Logo más grande */
+      width: auto;
+      border-radius: 8px;
+    }
+
     .search-bar input[type="search"]{
-      flex: 1 1 55%; /* permitir que el input ocupe ~55% y deje sitio al dropdown */
-      max-width: 60%;
-      padding:12px 18px;
+      flex: 1;
+      max-width: 800px; /* Barra más larga */
+      min-width: 250px;
+      padding:14px 20px; /* Un poco más de padding */
       border:1px solid rgba(25,0,25,0.06);
       border-radius:999px;
       background: rgba(255,255,255,0.95);
       box-shadow: 0 6px 16px rgba(25,0,25,0.06);
       color: var(--dark);
+      font-size: 16px;
     }
 
-    /* asegurar que el dropdown de categorías no se comprima y su texto no se corte */
-    .category-dropdown { flex: 0 0 auto; margin-left:8px; }
-    .category-toggle { white-space: nowrap; padding:8px 12px; border-radius:8px; }
-    /* ampliar un poco el panel mínimo para que se vea completo */
+    .category-dropdown { flex: 0 0 auto; display:flex; align-items:center; gap:10px; }
+    .category-toggle { white-space: nowrap; padding:10px 16px; border-radius:14px; font-size: 14px; }
+    .search-btn { padding:10px 16px; border-radius:14px; background:var(--soft); border:1px solid rgba(25,0,25,0.06); color:var(--dark); font-weight:700; cursor:pointer; font-size: 14px; }
     .category-panel { min-width: 360px; }
 
     .search-bar select,
     .search-bar button {
-      padding:10px 12px;
+      padding:10px 14px;
       border-radius:10px;
       border:1px solid rgba(25,0,25,0.06);
       background: white;
@@ -69,15 +92,13 @@
       font-weight:700;
     }
 
-    /* Grid de productos (sin cambiar estructura) */
     #products-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
       align-items: start;
     }
 
-    /* Tarjetas */
     .card {
       background: linear-gradient(180deg, rgba(255,255,255,0.98), #fffaf9);
       border-radius:12px;
@@ -88,14 +109,21 @@
       transition: transform .15s ease, box-shadow .15s ease;
     }
     .card:hover { transform: translateY(-8px); box-shadow: 0 18px 40px rgba(25,0,25,0.12); }
-    .card img { width:100%; height:160px; object-fit:cover; border-radius:8px; background:var(--glass); }
+    .card img {
+      width:100%;
+      aspect-ratio: 3/4;
+      height: auto;
+      max-height: 260px;
+      min-height: 200px;
+      object-fit:cover;
+      border-radius:8px;
+      background:var(--glass);
+    }
     .card .name { color: var(--deep); font-weight:700; }
     .card .price { color: var(--accent); font-weight:800; }
 
-    /* Modal y botones */
     .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(9,3,9,0.45); z-index:1000; padding:20px; }
     .modal.open { display:flex; }
-    /* ventana flotante centrada */
     .modal-content {
       background: linear-gradient(180deg, #fff, #fffaf9);
       border-radius:12px;
@@ -106,23 +134,45 @@
       padding:22px;
       box-shadow: 0 20px 60px rgba(9,3,9,0.3);
       display:grid;
-      grid-template-columns: 1fr 1fr; /* izquierda: imagen, derecha: detalles */
+      grid-template-columns: 1fr 1fr;
       gap:20px;
-      position:relative; /* necesario para que .close-btn sea absolute dentro de la ventana */
+      position:relative;
     }
-    /* al abrir modal bloquea el scroll de la página para que la ventana aparezca centrada */
     body.modal-open { overflow: hidden; height: 100vh; }
 
-    /* imagen izquierda y ajuste */
     .modal-left { display:flex; align-items:center; justify-content:center; }
-    .modal-left img { width:100%; height:360px; object-fit:contain; background:#fafafa; border-radius:10px; border:1px solid rgba(0,0,0,0.03); }
+    
+    /* Zoom con desplazamiento */
+    .modal-image-wrap { 
+      position: relative; 
+      width:100%;
+      height: 360px;
+      overflow: hidden;
+      border-radius:10px;
+      cursor: pointer;
+    }
+    .modal-image-wrap.zoomed {
+      cursor: grab;
+    }
+    .modal-image-wrap.zoomed:active {
+      cursor: grabbing;
+    }
+    .modal-image-wrap img { 
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background:#fafafa;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.03);
+      transition: transform 0.1s ease;
+      transform-origin: 0 0;
+    }
 
-    /* botón de cierre: cuadro rojo absoluto dentro de la ventana modal (esquina superior derecha) */
     .close-btn {
       position: absolute;
       top: 12px;
       right: 12px;
-      background: #c0392b; /* rojo */
+      background: #c0392b;
       color: #ffffff;
       width: 42px;
       height: 42px;
@@ -135,32 +185,42 @@
       cursor: pointer;
       box-shadow: 0 6px 18px rgba(192,57,43,0.18);
       transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
-      z-index: 10; /* por encima del contenido */
+      z-index: 10;
     }
     .close-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(192,57,43,0.22); opacity:0.95; }
 
-    /* asegurar que la columna de detalles pueda desplazarse si es necesario */
     .modal-right { overflow:auto; }
      .availability.available { color:#0a7; font-weight:700; }
      .availability.not-available { color:#b00; font-weight:700; }
 
-    /* Footer */
     footer { background: linear-gradient(90deg, var(--deep), var(--mid)); color: var(--soft); }
 
-    /* Responsividad ligera (sin alterar estructura) */
     @media (max-width:1000px){
       #products-grid { grid-template-columns: repeat(2,1fr); }
     }
     @media (max-width:620px){
       #products-grid { grid-template-columns: 1fr; }
-      .card img { height:220px; }
+      .card img { max-height:220px; min-height:120px; }
       .modal-content { grid-template-columns:1fr; padding:16px; }
-      /* en móvil dejar input ocupando todo el ancho y panel apilarse */
-      .search-bar input[type="search"]{ flex:1 1 auto; max-width:100%; }
+      .search-bar { flex-direction: column; gap: 12px; }
+      .search-bar input[type="search"]{ max-width:100%; }
       .category-panel { position:relative; max-height:240px; min-width: auto; width:100%; }
+      .logo-container { display: none; } /* Ocultar logo en móvil para ahorrar espacio */
     }
+    @media (max-width:1200px){
+       #products-grid { grid-template-columns: repeat(4,1fr); }
+    }
+    @media (max-width:900px){
+       #products-grid { grid-template-columns: repeat(3,1fr); }
+    }
+    @media (max-width:700px){
+       #products-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width:480px){
+       #products-grid { grid-template-columns: 1fr; }
+        .card img { max-height: 160px; min-height: 90px; }
+      }
 
-    /* categoría seleccionada: fondo ligeramente más oscuro y etiqueta destacada */
     .category-panel .cat-row.cat-selected {
       background: rgba(43,18,76,0.06);
       border-radius: 6px;
@@ -172,60 +232,84 @@
       font-weight: 700;
     }
 
-    /* asegurar que los elementos con .hidden estén ocultos */
     .hidden { display: none !important; }
+
+    /* Icono de lupa */
+    .zoom-icon {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--dark);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform .12s ease, box-shadow .12s ease;
+      z-index: 20;
+    }
+    .zoom-icon:hover { transform: scale(1.1); box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
   </style>
 </head>
 <body>
   <header>
     <div class="header-left">
       <h1>DC PHONE</h1>
-      <p class="slogan">TU MEJOR OPCIÓN, SIEMPRE ES CON <strong>NOSOTROS<strong></p>
+      <p class="slogan">TU MEJOR OPCIÓN, SIEMPRE ES CON <strong>NOSOTROS</strong></p>
     </div>
     <div class="social-icons">
       <a href="https://www.facebook.com/share/1CPWdYZ1L4/" target="_blank" rel="noopener noreferrer">
-        <img src="images/facebook.png" width="130" height="80" alt="Facebook">
+        <img src="images/Facebook.png" width="60" height="60" alt="Facebook">
       </a>
       <a href="https://www.instagram.com/dcphone28?igsh=MTBjaTAwNG9xaXVweg==" target="_blank" rel="noopener noreferrer">
-        <img src="images/instagram.png" width="90" height="80" alt="Instagram">
+        <img src="images/Instagram.png" width="60" height="60" alt="Instagram">
       </a>
       <a href="https://wa.me/76640026" target="_blank" rel="noopener noreferrer">
-        <img src="images/WhatsApp.png" width="80" height="80" alt="WhatsApp">
+        <img src="images/WhatsApp.png" width="60" height="60" alt="WhatsApp">
       </a>
     </div>
   </header>
 
   <main>
-    <h2>Productos</h2>
-
-    <!-- Nuevo layout: solo lista de productos -->
+    <!-- Se quitó el título "Productos" -->
+    
     <div class="container">
       <section class="products-section">
-        <div class="search-bar">
-          <input id="search-input" type="search" placeholder="Buscar producto por nombre, descripción, especificaciones..." />
-          <!-- Dropdown: categorías con marcas anidadas (multi-selección) -->
-          <div class="category-dropdown" id="category-dropdown" style="position:relative;">
-            <button id="category-toggle" type="button" class="category-toggle">Todas las categorías ▾</button>
-            <div id="category-panel" class="category-panel hidden" aria-hidden="true" style="position:absolute; left:0; top:calc(100% + 8px); z-index:50; background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.12); max-height:320px; overflow:auto; padding:12px; min-width:360px;">
-              <!-- contenido generado por JS: lista de categorías con marcas (checkboxes) -->
+        <!-- Contenedor centrado con logo y barra de búsqueda -->
+        <div class="search-container">
+          <div class="search-bar">
+            <div class="logo-container">
+              <img src="images/DC_PHONE.png" alt="DC PHONE Logo" class="store-logo">
             </div>
+            <input id="search-input" type="search" placeholder="Buscar producto por nombre, descripción, especificaciones..." />
+            <div class="category-dropdown" id="category-dropdown" style="position:relative;">
+              <button id="category-toggle" type="button" class="category-toggle">Todas las categorías ▾</button>
+              <button id="search-button" class="search-btn" type="button" aria-label="Buscar">Buscar</button>
+               <div id="category-panel" class="category-panel hidden" aria-hidden="true" style="position:absolute; left:0; top:calc(100% + 8px); z-index:50; background:#fff; border:1px solid rgba(0,0,0,0.08); border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.12); max-height:320px; overflow:auto; padding:12px; min-width:360px;">
+               </div>
+             </div>
           </div>
-           <button id="clear-search" type="button">Limpiar</button>
-           <button id="show-all" type="button">Mostrar todos</button>
-         </div>
+        </div>
 
         <div id="products-grid" aria-live="polite">
-          <!-- Tarjetas generadas por JS -->
         </div>
       </section>
     </div>
 
-    <!-- Modal para detalles — reemplaza el panel izquierdo -->
     <div id="product-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="modal-content" role="document">
         <button id="modal-close" class="close-btn" aria-label="Cerrar">X</button>
         <div class="modal-left">
-          <img id="modal-image" src="images/placeholder.png" alt="Imagen del producto">
+          <div class="modal-image-wrap" id="modal-image-wrap">
+            <img id="modal-image" src="images/placeholder.png" alt="Imagen del producto">
+            <div id="zoom-icon" class="zoom-icon">🔍</div>
+          </div>
         </div>
         <div class="modal-right">
           <h3 id="modal-name">Nombre del producto</h3>
@@ -240,8 +324,6 @@
           <ul id="modal-features" class="features-list"></ul>
 
           <div id="modal-stock" style="margin-top:8px;font-weight:700;"></div>
-
-          <!-- botón de compra eliminado: catálogo solo muestra información -->
         </div>
       </div>
     </div>
@@ -251,60 +333,66 @@
     <p>&copy; 2025 DCPhone</p>
   </footer>
 
-  <!-- Script actualizado: productos con specs/features/stock y apertura de modal -->
   <script>
-    // Reemplazado: productos (ahora ampliado con +20)
     const products = [
-      { id: 'Xiaomi Redmi Note 12', name: 'Xiaomi Redmi Note 12', brand: 'Xiaomi', category: 'Celulares', price: '$179.99', image: 'images/Xiaomi Redmi Note 12.jpeg', description: 'Buen equilibrio entre precio y prestaciones.', specs: ['Pantalla: 6.67"', 'RAM: 6GB', '128GB'], features: ['Carga rápida 33W','NFC','Dual SIM'], stock:15, available:true },
-      { id: 'Samsung Galaxy S23', name: 'Samsung Galaxy S23', brand: 'Samsung', category: 'Celulares', price: '$699.99', image: 'images/samsung_s23.jpg', description: 'Rendimiento alto y cámara avanzada.', specs: ['6.1"','8GB','128GB'], features:['Telefoto','IP68'], stock:8, available:true },
-      { id: 'iPhone 14', name: 'iPhone 14', brand: 'Apple', category: 'Celulares', price: '$799.00', image: 'images/iphone14.jpg', description: 'iOS y ecosistema Apple.', specs: ['6.1"','6GB','128GB'], features:['Face ID','MagSafe'], stock:4, available:true },
-      { id: 'OnePlus Nord 3', name: 'OnePlus Nord 3', brand: 'OnePlus', category: 'Celulares', price: '$399.99', image: 'images/oneplus_nord3.jpg', description: 'Rendimiento a buen precio.', specs:['6.7"','8GB','128GB'], features:['Carga 80W'], stock:6, available:true },
-      { id: 'Huawei P50', name: 'Huawei P50', brand: 'Huawei', category: 'Celulares', price: '$599.99', image: 'images/huawei_p50.jpg', description: 'Cámara premium.', specs:['6.5"','8GB','256GB'], features:['Cámara Leica'], stock:1, available:true },
+      { id: 'Xiaomi Redmi Note 12', name: 'Xiaomi Redmi Note 12', brand: 'Xiaomi', category: 'Celulares', price: '$179.99', image: 'images/XiaomiRedmiNote12.jpeg', description: 'Buen equilibrio entre precio y prestaciones.', specs: ['Pantalla: 6.67"', 'RAM: 6GB', '128GB'], features: ['Carga rápida 33W','NFC','Dual SIM'], stock:15, available:true },
+      { id: 'Samsung Galaxy S23', name: 'Samsung Galaxy S23', brand: 'Samsung', category: 'Celulares', price: '$699.99', image: 'images/SamsungGalaxyS23.jpg', description: 'Rendimiento alto y cámara avanzada.', specs: ['6.1"','8GB','128GB'], features:['Telefoto','IP68'], stock:0, available:false },
+      { id: 'iPhone 14', name: 'iPhone 14', brand: 'Apple', category: 'Celulares', price: '$799.00', image: 'images/Iphone14.jpg', description: 'iOS y ecosistema Apple.', specs: ['6.1"','6GB','128GB'], features:['Face ID','MagSafe'], stock:4, available:true },
+      { id: 'OnePlus Nord 3', name: 'OnePlus Nord 3', brand: 'OnePlus', category: 'Celulares', price: '$399.99', image: 'images/OnePlusNord3.jpg', description: 'Rendimiento a buen precio.', specs:['6.7"','8GB','128GB'], features:['Carga 80W'], stock:6, available:true },
+      { id: 'Huawei P50', name: 'Huawei P50', brand: 'Huawei', category: 'Celulares', price: '$599.99', image: 'images/HuaweiP50.png', description: 'Cámara premium.', specs:['6.5"','8GB','256GB'], features:['Cámara Leica'], stock:0, available:false },
       { id: 'Motorola Moto G Stylus', name: 'Motorola Moto G Stylus', brand: 'Motorola', category: 'Celulares', price: '$249.99', image: 'images/moto_g_stylus.jpg', description: 'Incluye stylus.', specs:['6.8"','6GB','128GB'], features:['Stylus'], stock:10, available:true },
       { id: 'Google Pixel 7', name: 'Google Pixel 7', brand: 'Google', category: 'Celulares', price: '$599.00', image: 'images/pixel7.jpg', description: 'Android puro y cámara potente.', specs:['6.3"','8GB','128GB'], features:['Tensor'], stock:7, available:true },
       { id: 'Nokia G22', name: 'Nokia G22', brand: 'Nokia', category: 'Celulares', price: '$149.99', image: 'images/nokia_g22.jpg', description: 'Batería destacada.', specs:['6.5"','4GB','64GB'], features:['Batería durable'], stock:18, available:true },
-
-      // Consolas
       { id: 'PlayStation 5', name: 'PlayStation 5', brand: 'Sony', category: 'Consolas', price: '$499.99', image: 'images/ps5.jpg', description: 'PS5 - nueva generación.', specs:['RDNA2','825GB SSD'], features:['DualSense','Ray Tracing'], stock:2, available:true },
-      { id: 'Xbox Series X', name: 'Xbox Series X', brand: 'Microsoft', category: 'Consolas', price: '$499.99', image: 'images/xbox_series_x.jpg', description: 'Xbox potente.', specs:['RDNA2','1TB SSD'], features:['Game Pass'], stock:3, available:true },
+      { id: 'Xbox Series X', name: 'Xbox Series X', brand: 'Microsoft', category: 'Consolas', price: '$499.99', image: 'images/xbox_series_x.jpg', description: 'Xbox potente.', specs:['RDNA2','1TB SSD'], features:['Game Pass'], stock:0, available:false },
       { id: 'Nintendo Switch', name: 'Nintendo Switch', brand: 'Nintendo', category: 'Consolas', price: '$299.99', image: 'images/switch.jpg', description: 'Switch híbrida.', specs:['CPU: Custom Nvidia','32GB'], features:['Portátil'], stock:6, available:true },
       { id: 'Nintendo Switch OLED', name: 'Nintendo Switch OLED', brand: 'Nintendo', category: 'Consolas', price: '$349.99', image: 'images/switch_oled.jpg', description: 'Pantalla OLED mejorada.', specs:['OLED','64GB'], features:['Dock incluido'], stock:5, available:true },
-
-      // Computadoras / Laptops
       { id: 'MacBook Air M2', name: 'MacBook Air M2', brand: 'Apple', category: 'Computadoras', price: '$999.00', image: 'images/macbook_air.jpg', description: 'MacBook Air con M2.', specs:['M2','8GB','256GB'], features:['Ligera'], stock:5, available:true },
-      { id: 'Dell XPS 13', name: 'Dell XPS 13', brand: 'Dell', category: 'Computadoras', price: '$999.99', image: 'images/dell_xps13.jpg', description: 'Portátil premium.', specs:['i7','16GB','512GB'], features:['Pantalla InfinityEdge'], stock:4, available:true },
+      { id: 'Dell XPS 13', name: 'Dell XPS 13', brand: 'Dell', category: 'Computadoras', price: '$999.99', image: 'images/dell_xps13.jpg', description: 'Portátil premium.', specs:['i7','16GB','512GB'], features:['Pantalla InfinityEdge'], stock:0, available:false },
       { id: 'Asus ROG Strix', name: 'Asus ROG Strix', brand: 'Asus', category: 'Computadoras', price: '$1499.00', image: 'images/asus_rog.jpg', description: 'Gaming potente.', specs:['i9','32GB','1TB'], features:['RGB','GPU potente'], stock:3, available:true },
-
-      // Tablets
       { id: 'iPad Air', name: 'iPad Air', brand: 'Apple', category: 'Tablets', price: '$599.00', image: 'images/ipad_air.jpg', description: 'Tablet ligera y potente.', specs:['10.9"','64GB'], features:['Apple Pencil'], stock:6, available:true },
       { id: 'Samsung Galaxy Tab S8', name: 'Samsung Galaxy Tab S8', brand: 'Samsung', category: 'Tablets', price: '$699.99', image: 'images/tab_s8.jpg', description: 'Tablet Android premium.', specs:['11"','128GB'], features:['S-Pen'], stock:4, available:true },
-      { id: 'Lenovo Tab P11', name: 'Lenovo Tab P11', brand: 'Lenovo', category: 'Tablets', price: '$229.99', image: 'images/lenovo_tab.jpg', description: 'Tablet para multimedia.', specs:['11"','64GB'], features:['Funda teclado'], stock:12, available:true },
-
-      // Relojes inteligentes
+      { id: 'Lenovo Tab P11', name: 'Lenovo Tab P11', brand: 'Lenovo', category: 'Tablets', price: '$229.99', image: 'images/lenovo_tab.jpg', description: 'Tablet para multimedia.', specs:['11"','64GB'], features:['Funda teclado'], stock:0, available:false },
       { id: 'Apple Watch Series 8', name: 'Apple Watch Series 8', brand: 'Apple', category: 'Relojes inteligentes', price: '$399.00', image: 'images/apple_watch.jpg', description: 'Monitor de salud y notificaciones.', specs:['GPS','ECG'], features:['Detección caídas'], stock:9, available:true },
-      { id: 'Samsung Galaxy Watch5', name: 'Samsung Galaxy Watch5', brand: 'Samsung', category: 'Relojes inteligentes', price: '$279.99', image: 'images/galaxy_watch.jpg', description: 'Reloj con buena autonomía.', specs:['GPS','AMOLED'], features:['Resistencia agua'], stock:7, available:true },
+      { id: 'Samsung Galaxy Watch5', name: 'Samsung Galaxy Watch5', brand: 'Samsung', category: 'Relojes inteligentes', price: '$279.99', image: 'images/galaxy_watch.jpg', description: 'Reloj con buena autonomía.', specs:['GPS','AMOLED'], features:['Resistencia agua'], stock:0, available:false },
       { id: 'Fitbit Versa 4', name: 'Fitbit Versa 4', brand: 'Fitbit', category: 'Relojes inteligentes', price: '$199.99', image: 'images/fitbit_versa.jpg', description: 'Enfoque salud y deporte.', specs:['GPS','24/7 HR'], features:['Sueño'], stock:11, available:true },
-
-      // Accesorios / Audio / Cámaras / Drones
       { id: 'Sony WH-1000XM5', name: 'Sony WH-1000XM5', brand: 'Sony', category: 'Accesorios', price: '$349.99', image: 'images/sony_wh1000xm5.jpg', description: 'Auriculares con cancelación.', specs:['Bluetooth 5.2','ANC'], features:['Cancelación ruido'], stock:11, available:true },
       { id: 'Logitech MX Master 3', name: 'Logitech MX Master 3', brand: 'Logitech', category: 'Accesorios', price: '$99.99', image: 'images/mx_master3.jpg', description: 'Ratón para productividad.', specs:['Bluetooth','USB-C'], features:['Botones programables'], stock:25, available:true },
-      { id: 'GoPro HERO10', name: 'GoPro HERO10', brand: 'GoPro', category: 'Cámaras', price: '$399.99', image: 'images/gopro_hero10.jpg', description: 'Cámara de acción.', specs:['5.3K','Estabilización'], features:['Sumergible'], stock:6, available:true },
+      { id: 'GoPro HERO10', name: 'GoPro HERO10', brand: 'GoPro', category: 'Cámaras', price: '$399.99', image: 'images/gopro_hero10.jpg', description: 'Cámara de acción.', specs:['5.3K','Estabilización'], features:['Sumergible'], stock:0, available:false },
       { id: 'DJI Mini 3', name: 'DJI Mini 3', brand: 'DJI', category: 'Drones', price: '$549.99', image: 'images/dji_mini3.jpg', description: 'Drone ligero y portátil.', specs:['4K','30min vuelo'], features:['Visual tracking'], stock:4, available:true }
     ];
 
     const grid = document.getElementById('products-grid');
     const searchInput = document.getElementById('search-input');
-    const clearBtn = document.getElementById('clear-search');
-    const showAllBtn = document.getElementById('show-all');
-    // dropdown panel elements
+    const searchBtn = document.getElementById('search-button');
     const categoryToggle = document.getElementById('category-toggle');
     const categoryPanel = document.getElementById('category-panel');
 
-    // estado de filtros
     const selectedCategories = new Set();
     const selectedBrands = new Set();
 
-    // poblar panel de categorías con marcas anidadas (checkboxes)
+    // Modal elements
+    const modal = document.getElementById('product-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalImageWrap = document.getElementById('modal-image-wrap');
+    const modalName = document.getElementById('modal-name');
+    const modalPrice = document.getElementById('modal-price');
+    const modalAvailability = document.getElementById('modal-availability');
+    const modalDescription = document.getElementById('modal-description');
+    const modalSpecs = document.getElementById('modal-specs');
+    const modalFeatures = document.getElementById('modal-features');
+    const modalStock = document.getElementById('modal-stock');
+    const modalClose = document.getElementById('modal-close');
+    const zoomIcon = document.getElementById('zoom-icon');
+
+    // Variables para el zoom con desplazamiento
+    let isZoomed = false;
+    let isDragging = false;
+    let startX, startY;
+    let scrollLeft = 0;
+    let scrollTop = 0;
+    const ZOOM_LEVEL = 2;
+
     function populateCategoryPanel() {
       const map = {};
       products.forEach(p => {
@@ -312,13 +400,14 @@
         map[cat] = map[cat] || new Set();
         if (p.brand) map[cat].add(p.brand);
       });
-      // limpiar panel
+      
       categoryPanel.innerHTML = '';
-      // botón rápido: seleccionar todas / deseleccionar todas
+      
       const controls = document.createElement('div');
       controls.style.display = 'flex';
       controls.style.gap = '8px';
       controls.style.marginBottom = '8px';
+      
       const btnSelectAll = document.createElement('button');
       btnSelectAll.type = 'button';
       btnSelectAll.textContent = 'Seleccionar todo';
@@ -330,6 +419,7 @@
         updateCheckboxes();
         filterProducts();
       };
+      
       const btnClearAll = document.createElement('button');
       btnClearAll.type = 'button';
       btnClearAll.textContent = 'Limpiar todo';
@@ -339,6 +429,7 @@
         updateCheckboxes();
         filterProducts();
       };
+      
       controls.appendChild(btnSelectAll);
       controls.appendChild(btnClearAll);
       categoryPanel.appendChild(controls);
@@ -349,7 +440,7 @@
         catRow.dataset.cat = cat;
         catRow.style.borderTop = '1px solid rgba(0,0,0,0.04)';
         catRow.style.padding = '8px 0';
-        // header: label clickable + expand toggle
+        
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.alignItems = 'center';
@@ -359,7 +450,7 @@
         left.style.display = 'flex';
         left.style.alignItems = 'center';
         left.style.gap = '8px';
-        // ahora la categoría es seleccionable haciendo click sobre su etiqueta
+        
         const catLabel = document.createElement('span');
         catLabel.textContent = cat;
         catLabel.style.cursor = 'pointer';
@@ -386,13 +477,13 @@
         header.appendChild(expandBtn);
         catRow.appendChild(header);
 
-        // brand list
         const brandList = document.createElement('div');
         brandList.style.padding = '8px 12px';
         brandList.style.display = 'grid';
         brandList.style.gridTemplateColumns = '1fr 1fr';
         brandList.style.gap = '6px';
         brandList.className = 'brand-list hidden';
+        
         Array.from(map[cat]).sort().forEach(brand => {
           const bwrap = document.createElement('label');
           bwrap.style.display = 'flex';
@@ -416,24 +507,23 @@
         catRow.appendChild(brandList);
         categoryPanel.appendChild(catRow);
       });
-      // sincronizar visualmente tras creación
+      
       updateCheckboxes();
     }
 
     function updateCheckboxes() {
-      // sincroniza visualmente las categorías seleccionadas y marcas
       categoryPanel.querySelectorAll('div[data-cat]').forEach(row => {
         const cat = row.dataset.cat;
         if (selectedCategories.has(cat)) row.classList.add('cat-selected');
         else row.classList.remove('cat-selected');
       });
-       categoryPanel.querySelectorAll('input[type="checkbox"][data-brand]').forEach(cb => {
-         const brand = cb.dataset.brand;
-         cb.checked = selectedBrands.has(brand);
-       });
-     }
+      
+      categoryPanel.querySelectorAll('input[type="checkbox"][data-brand]').forEach(cb => {
+        const brand = cb.dataset.brand;
+        cb.checked = selectedBrands.has(brand);
+      });
+    }
 
-    // render
     function renderProducts(list){
       grid.innerHTML = '';
       list.forEach(p=>{
@@ -450,7 +540,6 @@
       });
     }
 
-    // filtro que combina búsqueda por texto + categorías seleccionadas + marcas seleccionadas
     function filterProducts(){
       const q = searchInput.value.trim().toLowerCase();
       const filtered = products.filter(p => {
@@ -460,67 +549,144 @@
         return q === '' ? true : haystack.includes(q);
       });
       renderProducts(filtered);
-      // update toggle label with counts
+      
       const catLabel = selectedCategories.size ? `${selectedCategories.size} categ.` : 'Todas las categorías';
       const brandLabel = selectedBrands.size ? `${selectedBrands.size} marcas` : '';
       categoryToggle.textContent = brandLabel ? `${catLabel} · ${brandLabel} ▾` : `${catLabel} ▾`;
     }
 
-    // Modal elements
-    const modal = document.getElementById('product-modal');
-    const modalImage = document.getElementById('modal-image');
-    const modalName = document.getElementById('modal-name');
-    const modalPrice = document.getElementById('modal-price');
-    const modalAvailability = document.getElementById('modal-availability');
-    const modalDescription = document.getElementById('modal-description');
-    const modalSpecs = document.getElementById('modal-specs');
-    const modalFeatures = document.getElementById('modal-features');
-    const modalStock = document.getElementById('modal-stock');
-    const modalClose = document.getElementById('modal-close');
+    // Funciones para el zoom con desplazamiento
+    function enableZoom() {
+      isZoomed = true;
+      modalImage.style.transform = `scale(${ZOOM_LEVEL})`;
+      modalImageWrap.classList.add('zoomed');
+      zoomIcon.textContent = '✕';
+      
+      // Centrar la imagen al hacer zoom
+      const imgRect = modalImage.getBoundingClientRect();
+      const wrapRect = modalImageWrap.getBoundingClientRect();
+      const centerX = (imgRect.width * ZOOM_LEVEL - wrapRect.width) / 2;
+      const centerY = (imgRect.height * ZOOM_LEVEL - wrapRect.height) / 2;
+      
+      modalImage.style.transform = `scale(${ZOOM_LEVEL}) translate(${-centerX / ZOOM_LEVEL}px, ${-centerY / ZOOM_LEVEL}px)`;
+    }
+
+    function disableZoom() {
+      isZoomed = false;
+      modalImage.style.transform = 'scale(1) translate(0px, 0px)';
+      modalImageWrap.classList.remove('zoomed');
+      zoomIcon.textContent = '🔍';
+    }
+
+    function toggleZoom() {
+      if (isZoomed) {
+        disableZoom();
+      } else {
+        enableZoom();
+      }
+    }
+
+    function startDrag(e) {
+      if (!isZoomed) return;
+      
+      isDragging = true;
+      modalImageWrap.style.cursor = 'grabbing';
+      
+      const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+      
+      startX = clientX - modalImageWrap.offsetLeft;
+      startY = clientY - modalImageWrap.offsetTop;
+      scrollLeft = parseFloat(modalImage.style.transform.split('translate(')[1]?.split('px')[0]) || 0;
+      scrollTop = parseFloat(modalImage.style.transform.split('translate(')[1]?.split(',')[1]?.split('px')[0]) || 0;
+    }
+
+    function duringDrag(e) {
+      if (!isDragging || !isZoomed) return;
+      
+      e.preventDefault();
+      
+      const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+      const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+      
+      const x = clientX - modalImageWrap.offsetLeft;
+      const y = clientY - modalImageWrap.offsetTop;
+      
+      const walkX = (x - startX) * 1.5;
+      const walkY = (y - startY) * 1.5;
+      
+      const newX = scrollLeft - walkX / ZOOM_LEVEL;
+      const newY = scrollTop - walkY / ZOOM_LEVEL;
+      
+      // Limitar el desplazamiento para no salir de los bordes
+      const imgRect = modalImage.getBoundingClientRect();
+      const wrapRect = modalImageWrap.getBoundingClientRect();
+      const maxX = (imgRect.width * ZOOM_LEVEL - wrapRect.width) / (2 * ZOOM_LEVEL);
+      const maxY = (imgRect.height * ZOOM_LEVEL - wrapRect.height) / (2 * ZOOM_LEVEL);
+      
+      const limitedX = Math.max(-maxX, Math.min(maxX, newX));
+      const limitedY = Math.max(-maxY, Math.min(maxY, newY));
+      
+      modalImage.style.transform = `scale(${ZOOM_LEVEL}) translate(${limitedX}px, ${limitedY}px)`;
+    }
+
+    function stopDrag() {
+      isDragging = false;
+      modalImageWrap.style.cursor = isZoomed ? 'grab' : 'pointer';
+    }
 
     function openModal(id){
       const p = products.find(x=>x.id===id);
       if(!p) return;
+      
       modalImage.src = p.image;
       modalImage.alt = p.name;
       modalName.textContent = p.name;
       modalPrice.textContent = p.price;
       modalDescription.textContent = p.description;
 
-      // specs
+      // Reset zoom state
+      disableZoom();
+
+      // Specs
       modalSpecs.innerHTML = '';
       if(Array.isArray(p.specs) && p.specs.length){
         p.specs.forEach(s=>{
-          const li = document.createElement('li'); li.textContent = s; modalSpecs.appendChild(li);
+          const li = document.createElement('li'); 
+          li.textContent = s; 
+          modalSpecs.appendChild(li);
         });
       } else {
         modalSpecs.innerHTML = '<li>N/A</li>';
       }
 
-      // features
+      // Features
       modalFeatures.innerHTML = '';
       if(Array.isArray(p.features) && p.features.length){
         p.features.forEach(f=>{
-          const li = document.createElement('li'); li.textContent = f; modalFeatures.appendChild(li);
+          const li = document.createElement('li'); 
+          li.textContent = f; 
+          modalFeatures.appendChild(li);
         });
       } else {
         modalFeatures.innerHTML = '<li>N/A</li>';
       }
 
-      // stock / disponibilidad
+      // Stock
       modalStock.textContent = 'Stock: ' + (typeof p.stock === 'number' ? p.stock : 'N/A');
       if(p.available && p.stock > 0){
         modalAvailability.textContent = 'Disponible';
-        modalAvailability.classList.remove('not-available'); modalAvailability.classList.add('available');
+        modalAvailability.classList.remove('not-available'); 
+        modalAvailability.classList.add('available');
       } else {
         modalAvailability.textContent = 'No disponible';
-        modalAvailability.classList.remove('available'); modalAvailability.classList.add('not-available');
+        modalAvailability.classList.remove('available'); 
+        modalAvailability.classList.add('not-available');
       }
 
-      // mostrar modal
+      // Show modal
       modal.classList.add('open');
       modal.setAttribute('aria-hidden','false');
-      // bloquear scroll de fondo y enfocar el botón cerrar sin desplazar la página
       document.body.classList.add('modal-open');
       try { modalClose.focus({ preventScroll: true }); } catch (e) { modalClose.focus(); }
     }
@@ -528,48 +694,68 @@
     function closeModal(){
       modal.classList.remove('open');
       modal.setAttribute('aria-hidden','true');
-      // restaurar scroll de la página
       document.body.classList.remove('modal-open');
+      // Reset zoom when closing modal
+      disableZoom();
     }
 
-    // cerrar con botón
+    // Event listeners para el zoom
+    zoomIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleZoom();
+    });
+
+    // Event listeners para el desplazamiento
+    modalImageWrap.addEventListener('mousedown', startDrag);
+    modalImageWrap.addEventListener('touchstart', startDrag);
+    
+    modalImageWrap.addEventListener('mousemove', duringDrag);
+    modalImageWrap.addEventListener('touchmove', duringDrag);
+    
+    modalImageWrap.addEventListener('mouseup', stopDrag);
+    modalImageWrap.addEventListener('touchend', stopDrag);
+    modalImageWrap.addEventListener('mouseleave', stopDrag);
+
+    // Event listeners generales
     modalClose.addEventListener('click', closeModal);
-    // cerrar al hacer click fuera del content
     modal.addEventListener('click', (e)=> {
       if(e.target === modal) closeModal();
     });
-    // cerrar con ESC
-    document.addEventListener('keydown', (e)=> { if(e.key === 'Escape') closeModal(); });
+    document.addEventListener('keydown', (e)=> { 
+      if(e.key === 'Escape') closeModal(); 
+    });
 
-    // eventos
-    searchInput.addEventListener('input', filterProducts);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        filterProducts();
+      }
+    });
+
     categoryToggle.addEventListener('click', (e) => {
       e.stopPropagation();
       categoryPanel.classList.toggle('hidden');
       const hidden = categoryPanel.classList.contains('hidden');
       categoryPanel.setAttribute('aria-hidden', String(hidden));
     });
-    clearBtn.addEventListener('click', ()=> {
-      searchInput.value = '';
-      selectedBrands.clear();
-      selectedCategories.clear();
-      updateCheckboxes();
-      filterProducts();
-      searchInput.focus();
-    });
-    showAllBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      selectedBrands.clear();
-      selectedCategories.clear();
-      updateCheckboxes();
-      renderProducts(products);
-      categoryToggle.textContent = 'Todas las categorías ▾';
+
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        filterProducts();
+      });
+    }
+
+    // Close category panel when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!categoryDropdown.contains(e.target)) {
+        categoryPanel.classList.add('hidden');
+        categoryPanel.setAttribute('aria-hidden', 'true');
+      }
     });
 
-    // init
+    // Initialize
     populateCategoryPanel();
     renderProducts(products);
   </script>
 </body>
-
 </html>
