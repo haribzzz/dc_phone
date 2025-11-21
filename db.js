@@ -1,23 +1,27 @@
+// db.js
 const sql = require('mssql');
 
+// Configuración de conexión
 const config = {
-    user: 'AdminDC',
-    password: 'DCPHONE2025!',
-    server: 'PAPITA_SALADA\\DCPHONESQL', // <-- usa el nombre correcto del servidor
-    database: 'dc_phone',
+    user: 'sa',                       // tu usuario SQL Server
+    password: 'DCPHONE2025!',        // tu contraseña
+    server: 'localhost\\BASEDCPHONE', // tu instancia
+    database: 'dc_phone3',            // tu base de datos
     options: {
-        trustServerCertificate: true, // <-- era un punto y coma, debía ser una coma
-        encrypt: true
-    },
+        encrypt: false,               // false para local
+        trustServerCertificate: true  // evita errores de certificado
+    }
 };
 
-async function connectDB() {
-    try {
-        await sql.connect(config);
-        console.log('Conectado a SQL Server correctamente');
-    } catch (err) {
-        console.error('Error al conectar a la base de datos:', err);
-    }
-}
+// Crear y exportar el pool de conexión
+const connectionDB = new sql.ConnectionPool(config)
+    .connect()
+    .then(pool => {
+        console.log('✅ Conectado a SQL Server');
+        return pool;
+    })
+    .catch(err => {
+        console.error('❌ Error de conexión:', err);
+    });
 
-module.exports = { sql, connectDB, config };
+module.exports = { sql, connectionDB, config };

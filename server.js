@@ -1,26 +1,29 @@
 const express = require('express');
 const path = require('path');
-const { sql, connectDB, config } = require('./db'); // <-- importamos conexión
+const { sql, connectionDB, config } = require('./db'); // importar conexión
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servir archivos estáticos
+// --------------------
+// Archivos estáticos
+// --------------------
 app.use(express.static(path.join(__dirname)));
-
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
+// --------------------
 // Ruta principal
+// --------------------
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html')); // index.html dentro de 'public'
 });
 
-// Conectar a la base de datos al iniciar el servidor
-connectDB();
-
+// --------------------
 // Ruta para obtener productos
-app.get('/productos', async (req, res) => {
+// --------------------
+app.get('/Producto', async (req, res) => {
     try {
-        const pool = await sql.connect(config);
+        const pool = await connectionDB; // conexión desde db.js
         const result = await pool.request().query('SELECT * FROM Producto');
         res.json(result.recordset);
     } catch (err) {
@@ -29,7 +32,20 @@ app.get('/productos', async (req, res) => {
     }
 });
 
+// --------------------
+// Probar conexión (opcional)
+// --------------------
+async function probarConexion() {
+    try {
+        await sql.connect(config);
+        console.log('✅ Conexión exitosa a SQL Server');
+    } catch (err) {
+        console.error('❌ Error de conexión:', err);
+    }
+}
+probarConexion();
+
+// --------------------
 // Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+// --------------------
+app.listen(PORT, () => console.log(`Servidor escuchando en http://localhost:${PORT}`));
