@@ -1,23 +1,22 @@
 // db.js
 const sql = require('mssql');
 
-// Configuración de conexión
 const config = {
-    user: 'sa',                       // tu usuario SQL Server
-    password: 'DCPHONE2025!',        // tu contraseña
-    server: 'localhost\\BASEDCPHONE', // tu instancia
-    database: 'dc_phone3',            // tu base de datos
+    user: 'papita90_SQLLogin_1',       // TU login de Somee
+    password: 'DCPHONE2025',      // poné tu contraseña
+    server: 'dc_phone_db.mssql.somee.com', 
+    database: 'dc_phone_db',
+    port: 1433,
     options: {
-        encrypt: false,               // false para local
-        trustServerCertificate: true  // evita errores de certificado
+        encrypt: true,                 // obligatorio para servidores externos
+        trustServerCertificate: true  // debe ir en false para Somee
     }
 };
 
-// Crear y exportar el pool de conexión
 const connectionDB = new sql.ConnectionPool(config)
     .connect()
     .then(pool => {
-        console.log('✅ Conectado a SQL Server');
+        console.log('🌐 Conectado a SQL Server SOMEE');
         return pool;
     })
     .catch(err => {
