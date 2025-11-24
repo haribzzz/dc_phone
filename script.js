@@ -100,9 +100,13 @@ async function fetchProducts() {
     if (!res.ok) throw new Error('Error al obtener productos del servidor');
     const data = await res.json();
 
-    const baseUrl = 'https://dc-phone.onrender.com'; // Confirma tu URL de Render
-
     products = data.map(row => {
+      const baseUrl = 'https://dc-phone.onrender.com';
+
+      let imgName = row.imagen || '';
+      let imageUrl = `${baseUrl}/images/${imgName}`;
+
+      const placeholder = `${baseUrl}/images/placeholder.png`;
       
       return {
         id: String(row.id_producto),
@@ -110,7 +114,7 @@ async function fetchProducts() {
         brand: row.marca || '',
         category: row.categoria || '',
         price: row.precio ? `$${row.precio}` : '—',
-        image: row.imagen ? `${baseUrl}/images/${row.imagen.trim()}` : `${baseUrl}/images/placeholder.png`,
+        image: imageUrl,
         description: row.descripcion || '',
         specs: [],
         features: [],
@@ -164,7 +168,8 @@ function renderProducts(productsToRender) {
     img.style.objectFit = 'contain';
 
     img.onerror = function () {
-      img.src = placeholder;
+      this.onerror = null;
+      this.src = product.placeholder;
     };
 
     imgContainer.appendChild(img);
