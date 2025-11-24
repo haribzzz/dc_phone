@@ -93,16 +93,46 @@ function setupEventListeners() {
 }
 
 // ----------------- Backend calls -----------------
-// ----------------- fetchProducts -----------------
+// ----------------- Backend calls -----------------
+async function fetchProducts() {
+  try {
+    const res = await fetch(`${API_BASE}/productos`);
+    if (!res.ok) throw new Error('Error al obtener productos del servidor');
+    const data = await res.json();
+
+    // Aquí asumimos que product.imagen ya tiene el nombre de la imagen en DB
+    // y que las imágenes están en: https://dc-phone.onrender.com/images/<nombre>
+    const baseUrl = 'https://dc-phone.onrender.com/images';
+
+    products = data.map(row => ({
+      id: String(row.id_producto),
+      name: row.nombre || '',
+      brand: row.marca || '',
+      category: row.categoria || '',
+      price: row.precio ? `$${row.precio}` : '—',
+      image: row.imagen ? `${baseUrl}/${row.imagen}` : `${baseUrl}/placeholder.png`,
+      description: row.descripcion || '',
+      specs: [],
+      features: [],
+      stock: Number(row.stock) || 0,
+      available: (String(row.esta_activo).toLowerCase() === 'true' || row.esta_activo === 1)
+    }));
+
+    renderProducts(products);
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">Error al obtener productos del servidor</p>';
+  }
+}
+
+// ----------------- renderProducts -----------------
 function renderProducts(productsToRender) {
   grid.innerHTML = '';
   if (!productsToRender || productsToRender.length === 0) {
     grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">No se encontraron productos</p>';
     return;
   }
-
-  const baseUrl = 'https://dc-phone.onrender.com';
-  const placeholder = `${baseUrl}/images/placeholder.png`;
 
   productsToRender.forEach(product => {
     const card = document.createElement('div');
@@ -112,51 +142,41 @@ function renderProducts(productsToRender) {
     const imgContainer = document.createElement('div');
     imgContainer.style.width = '100%';
     imgContainer.style.height = '200px';
-    imgContainer.style.backgroundColor = '#f0f0f0';
+    imgContainer.style.backgroundImage = url('${product.image}');
+    imgContainer.style.backgroundSize = 'cover';
+    imgContainer.style.backgroundPosition = 'center';
     imgContainer.style.borderRadius = '8px';
-    imgContainer.style.display = 'flex';
-    imgContainer.style.alignItems = 'center';
-    imgContainer.style.justifyContent = 'center';
-    imgContainer.style.overflow = 'hidden';
 
+    // Imagen real para superponer si quieres zoom
     const img = document.createElement('img');
-    img.src = `${baseUrl}/images/${product.imagen || ''}`;
+    img.src = product.image;
     img.alt = product.name;
     img.loading = 'lazy';
-    img.style.maxWidth = '100%';
-    img.style.maxHeight = '100%';
-    img.style.objectFit = 'contain';
+    img.style.display = 'none';
 
-    // Si la imagen falla, usar placeholder
-    img.onerror = function() {
-      img.src = placeholder;
+    img.onload = () => { img.style.display = 'block'; };
+    img.onerror = () => {
+      console.warn(`No se pudo cargar imagen para ${product.name}`);
+      imgContainer.style.backgroundImage = url('https://dc-phone.onrender.com/images/placeholder.png');
     };
 
-    imgContainer.appendChild(img);
-
-    // Contenido debajo de la imagen
-    const content = document.createElement('div');
-    content.style.padding = '10px';
-    content.style.textAlign = 'center';
-    content.innerHTML = `
-      <div class="name" style="min-height: 48px; font-weight:600;">${product.name}</div>
-      <div class="price">${isAdminAuthenticated ? `<span>${product.price}</span>` : product.price}</div>
+    card.innerHTML = `
+      <div class="name">${product.name}</div>
+      <div class="price">${isAdminAuthenticated ? <span>${product.price}</span> : product.price}</div>
       <div class="availability ${product.available ? 'available' : 'not-available'}">
         ${product.available ? 'Disponible' : 'Agotado'}
       </div>
     `;
 
-    card.appendChild(imgContainer);
-    card.appendChild(content);
+    card.insertBefore(imgContainer, card.firstChild);
+    imgContainer.appendChild(img);
 
-    // Abrir modal al hacer click
     card.addEventListener('click', () => openProductModal(product));
     grid.appendChild(card);
   });
 
   console.log(`Renderizados ${productsToRender.length} productos`);
 }
-
 
 // Agregar producto (POST a backend)
 async function addProductToServer(prod) {
