@@ -94,45 +94,6 @@ function setupEventListeners() {
 
 // ----------------- Backend calls -----------------
 // ----------------- fetchProducts -----------------
-async function fetchProducts() {
-  try {
-    const res = await fetch(`${API_BASE}/productos`);
-    if (!res.ok) throw new Error('Error al obtener productos del servidor');
-    const data = await res.json();
-
-    const baseUrl = 'https://dc-phone.onrender.com'; // Confirma tu URL de Render
-
-    products = data.map(row => {
-      let imgSrc = `${baseUrl}/images/placeholder.png`; // Default
-      if (row.imagen && row.imagen.trim() !== '' && row.imagen !== 'null') {
-        // Asume que row.imagen es el nombre base (ej. "imagen1"), construye ruta
-        const baseName = row.imagen.split('.')[0]; // Quita extensión si existe
-        imgSrc = `${baseUrl}/images/${baseName}.jpg`; // Tentativa inicial
-      }
-
-      return {
-        id: String(row.id_producto),
-        name: row.nombre || '',
-        brand: row.marca || '',
-        category: row.categoria || '',
-        price: row.precio ? `$${row.precio}` : '—',
-        image: imgSrc,
-        description: row.descripcion || '',
-        specs: [],
-        features: [],
-        stock: Number(row.stock) || 0,
-        available: (String(row.esta_activo).toLowerCase() === 'true' || row.esta_activo === 1)
-      };
-    });
-
-    renderProducts(products);
-  } catch (err) {
-    console.error('Error en fetchProducts:', err);
-    grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">Error al obtener productos del servidor</p>';
-  }
-}
-
-// ----------------- renderProducts -----------------
 function renderProducts(productsToRender) {
   grid.innerHTML = '';
   if (!productsToRender || productsToRender.length === 0) {
@@ -140,77 +101,62 @@ function renderProducts(productsToRender) {
     return;
   }
 
-  const baseUrl = 'https://dc-phone.onrender.com'; // Mismo que arriba
+  const baseUrl = 'https://dc-phone.onrender.com';
+  const placeholder = `${baseUrl}/images/placeholder.png`;
 
   productsToRender.forEach(product => {
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Contenedor de imagen con placeholder (altura aumentada)
+    // Contenedor de imagen
     const imgContainer = document.createElement('div');
     imgContainer.style.width = '100%';
-    imgContainer.style.height = '250px'; // Aumenta para que no se vea delgado
-    imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
-    imgContainer.style.backgroundSize = 'cover';
-    imgContainer.style.backgroundPosition = 'center';
+    imgContainer.style.height = '200px';
+    imgContainer.style.backgroundColor = '#f0f0f0';
     imgContainer.style.borderRadius = '8px';
+    imgContainer.style.display = 'flex';
+    imgContainer.style.alignItems = 'center';
+    imgContainer.style.justifyContent = 'center';
     imgContainer.style.overflow = 'hidden';
 
     const img = document.createElement('img');
-    img.src = product.image;
+    img.src = `${baseUrl}/images/${product.imagen || ''}`;
     img.alt = product.name;
     img.loading = 'lazy';
-    img.style.display = 'none';
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '100%';
+    img.style.objectFit = 'contain';
 
-    console.log('Intentando cargar imagen:', product.image); // Debug: ve qué URL se usa
-
-    img.onload = () => {
-      imgContainer.style.backgroundImage = `url('${img.src}')`;
-      img.style.display = 'block';
-    };
-
-    // Mejor onerror: prueba extensiones automáticamente
+    // Si la imagen falla, usar placeholder
     img.onerror = function() {
-      const baseName = product.image.split('/').pop().split('.')[0]; // Extrae nombre base
-      const possibleSrcs = [
-        `${baseUrl}/images/${baseName}.jpg`,
-        `${baseUrl}/images/${baseName}.jpeg`,
-        `${baseUrl}/images/${baseName}.png`,
-        `${baseUrl}/images/${baseName}.gif`,
-        `${baseUrl}/images/${baseName}.webp`,
-        `${baseUrl}/images/placeholder.png` // Fallback final
-      ];
-      let triedIndex = 0;
-      const tryNext = () => {
-        if (triedIndex < possibleSrcs.length) {
-          console.log('Probando alternativa:', possibleSrcs[triedIndex]); // Debug
-          img.src = possibleSrcs[triedIndex++];
-        } else {
-          console.warn(`No se pudo cargar imagen para ${product.name}`);
-          imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
-        }
-      };
-      tryNext();
-      img.onerror = tryNext;
+      img.src = placeholder;
     };
 
-    card.innerHTML = `
-      <div class="name">${product.name}</div>
+    imgContainer.appendChild(img);
+
+    // Contenido debajo de la imagen
+    const content = document.createElement('div');
+    content.style.padding = '10px';
+    content.style.textAlign = 'center';
+    content.innerHTML = `
+      <div class="name" style="min-height: 48px; font-weight:600;">${product.name}</div>
       <div class="price">${isAdminAuthenticated ? `<span>${product.price}</span>` : product.price}</div>
       <div class="availability ${product.available ? 'available' : 'not-available'}">
         ${product.available ? 'Disponible' : 'Agotado'}
       </div>
     `;
 
-    card.insertBefore(imgContainer, card.firstChild);
-    imgContainer.appendChild(img);
+    card.appendChild(imgContainer);
+    card.appendChild(content);
 
+    // Abrir modal al hacer click
     card.addEventListener('click', () => openProductModal(product));
     grid.appendChild(card);
   });
 
   console.log(`Renderizados ${productsToRender.length} productos`);
 }
+
 
 // Agregar producto (POST a backend)
 async function addProductToServer(prod) {
@@ -336,64 +282,6 @@ function showPromotionsSection() {
       container.appendChild(banner);
     });
   });
-}
-
-
-// ----------------- renderProducts -----------------
-function renderProducts(productsToRender) {
-  grid.innerHTML = '';
-  if (!productsToRender || productsToRender.length === 0) {
-    grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">No se encontraron productos</p>';
-    return;
-  }
-
-  const baseUrl = 'https://dc-phone.onrender.com';
-
-  productsToRender.forEach(product => {
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    // Contenedor de imagen con placeholder
-    const imgContainer = document.createElement('div');
-    imgContainer.style.width = '100%';
-    imgContainer.style.height = '200px';
-    imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
-    imgContainer.style.backgroundSize = 'cover';
-    imgContainer.style.backgroundPosition = 'center';
-    imgContainer.style.borderRadius = '8px';
-
-    const img = document.createElement('img');
-    img.src = product.image;
-    img.alt = product.name;
-    img.loading = 'lazy';
-    img.style.display = 'none';
-
-    img.onload = () => {
-      imgContainer.style.backgroundImage = `url('${img.src}')`;
-      img.style.display = 'block';
-    };
-
-    img.onerror = function() {
-      console.warn(`No se pudo cargar imagen para ${product.name}`);
-      imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
-    };
-
-    card.innerHTML = `
-      <div class="name">${product.name}</div>
-      <div class="price">${isAdminAuthenticated ? `<span>${product.price}</span>` : product.price}</div>
-      <div class="availability ${product.available ? 'available' : 'not-available'}">
-        ${product.available ? 'Disponible' : 'Agotado'}
-      </div>
-    `;
-
-    card.insertBefore(imgContainer, card.firstChild);
-    imgContainer.appendChild(img);
-
-    card.addEventListener('click', () => openProductModal(product));
-    grid.appendChild(card);
-  });
-
-  console.log(`Renderizados ${productsToRender.length} productos`);
 }
 
 // ----------------- Product modal & helpers -----------------
