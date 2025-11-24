@@ -93,26 +93,21 @@ function setupEventListeners() {
 }
 
 // ----------------- Backend calls -----------------
-// Traer productos desde SQL Server (backend)
+// ----------------- fetchProducts -----------------
 async function fetchProducts() {
   try {
     const res = await fetch(`${API_BASE}/productos`);
     if (!res.ok) throw new Error('Error al obtener productos del servidor');
     const data = await res.json();
 
-    // Define tu dominio base para rutas absolutas (URL del sitio web)
-    const baseUrl = 'http://dc-phone.somee.com'; // Cambia si es HTTPS
+    const baseUrl = 'https://dc-phone.onrender.com'; // Confirma tu URL de Render
 
     products = data.map(row => {
-      let imgSrc = `${baseUrl}/images/placeholder.png`; // Default absoluto
+      let imgSrc = `${baseUrl}/images/placeholder.png`; // Default
       if (row.imagen && row.imagen.trim() !== '' && row.imagen !== 'null') {
-        if (row.imagen.startsWith('http://') || row.imagen.startsWith('https://')) {
-          imgSrc = row.imagen; // URL completa desde DB
-        } else {
-          // Construye rutas absolutas; renderProducts probará extensiones si falla
-          const baseName = row.imagen.split('.')[0]; // Quitar extensión actual
-          imgSrc = `${baseUrl}/images/${baseName}.jpg`; // Tentativa inicial
-        }
+        // Asume que row.imagen es el nombre base (ej. "imagen1"), construye ruta
+        const baseName = row.imagen.split('.')[0]; // Quita extensión si existe
+        imgSrc = `${baseUrl}/images/${baseName}.jpg`; // Tentativa inicial
       }
 
       return {
@@ -132,9 +127,89 @@ async function fetchProducts() {
 
     renderProducts(products);
   } catch (err) {
-    console.error(err);
+    console.error('Error en fetchProducts:', err);
     grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">Error al obtener productos del servidor</p>';
   }
+}
+
+// ----------------- renderProducts -----------------
+function renderProducts(productsToRender) {
+  grid.innerHTML = '';
+  if (!productsToRender || productsToRender.length === 0) {
+    grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">No se encontraron productos</p>';
+    return;
+  }
+
+  const baseUrl = 'https://dc-phone.onrender.com'; // Mismo que arriba
+
+  productsToRender.forEach(product => {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // Contenedor de imagen con placeholder (altura aumentada)
+    const imgContainer = document.createElement('div');
+    imgContainer.style.width = '100%';
+    imgContainer.style.height = '250px'; // Aumenta para que no se vea delgado
+    imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
+    imgContainer.style.backgroundSize = 'cover';
+    imgContainer.style.backgroundPosition = 'center';
+    imgContainer.style.borderRadius = '8px';
+    imgContainer.style.overflow = 'hidden';
+
+    const img = document.createElement('img');
+    img.src = product.image;
+    img.alt = product.name;
+    img.loading = 'lazy';
+    img.style.display = 'none';
+
+    console.log('Intentando cargar imagen:', product.image); // Debug: ve qué URL se usa
+
+    img.onload = () => {
+      imgContainer.style.backgroundImage = `url('${img.src}')`;
+      img.style.display = 'block';
+    };
+
+    // Mejor onerror: prueba extensiones automáticamente
+    img.onerror = function() {
+      const baseName = product.image.split('/').pop().split('.')[0]; // Extrae nombre base
+      const possibleSrcs = [
+        `${baseUrl}/images/${baseName}.jpg`,
+        `${baseUrl}/images/${baseName}.jpeg`,
+        `${baseUrl}/images/${baseName}.png`,
+        `${baseUrl}/images/${baseName}.gif`,
+        `${baseUrl}/images/${baseName}.webp`,
+        `${baseUrl}/images/placeholder.png` // Fallback final
+      ];
+      let triedIndex = 0;
+      const tryNext = () => {
+        if (triedIndex < possibleSrcs.length) {
+          console.log('Probando alternativa:', possibleSrcs[triedIndex]); // Debug
+          img.src = possibleSrcs[triedIndex++];
+        } else {
+          console.warn(`No se pudo cargar imagen para ${product.name}`);
+          imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
+        }
+      };
+      tryNext();
+      img.onerror = tryNext;
+    };
+
+    card.innerHTML = `
+      <div class="name">${product.name}</div>
+      <div class="price">${isAdminAuthenticated ? `<span>${product.price}</span>` : product.price}</div>
+      <div class="availability ${product.available ? 'available' : 'not-available'}">
+        ${product.available ? 'Disponible' : 'Agotado'}
+      </div>
+    `;
+
+    card.insertBefore(imgContainer, card.firstChild);
+    imgContainer.appendChild(img);
+
+    card.addEventListener('click', () => openProductModal(product));
+    grid.appendChild(card);
+  });
+
+  console.log(`Renderizados ${productsToRender.length} productos`);
 }
 
 // Agregar producto (POST a backend)
@@ -263,6 +338,8 @@ function showPromotionsSection() {
   });
 }
 
+
+// ----------------- renderProducts -----------------
 function renderProducts(productsToRender) {
   grid.innerHTML = '';
   if (!productsToRender || productsToRender.length === 0) {
@@ -270,43 +347,37 @@ function renderProducts(productsToRender) {
     return;
   }
 
-  // Define tu dominio base para rutas absolutas (cambia por tu sitio SOMEE real)
-  const baseUrl = 'http://dc-phone.somee.com/'; // Ejemplo: https://mi-tienda.somee.com
+  const baseUrl = 'https://dc-phone.onrender.com';
 
   productsToRender.forEach(product => {
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Crear imagen con src inicial
+    // Contenedor de imagen con placeholder
+    const imgContainer = document.createElement('div');
+    imgContainer.style.width = '100%';
+    imgContainer.style.height = '200px';
+    imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
+    imgContainer.style.backgroundSize = 'cover';
+    imgContainer.style.backgroundPosition = 'center';
+    imgContainer.style.borderRadius = '8px';
+
     const img = document.createElement('img');
-    img.src = product.image; // Viene de fetchProducts (ya debería ser absoluta si aplicaste cambios)
+    img.src = product.image;
     img.alt = product.name;
     img.loading = 'lazy';
+    img.style.display = 'none';
 
-    // Handler robusto para onerror: prueba extensiones y fallback
-    img.onerror = function() {
-      const baseName = product.image.split('/').pop().split('.')[0]; // Extrae nombre base (ej. 'imagen1')
-      const possibleSrcs = [
-        `${baseUrl}/images/${baseName}.jpg`,
-        `${baseUrl}/images/${baseName}.jpeg`,
-        `${baseUrl}/images/${baseName}.png`,
-        `${baseUrl}/images/${baseName}.gif`,
-        `${baseUrl}/images/${baseName}.webp`,
-        `${baseUrl}/images/placeholder.png` // Fallback final
-      ];
-      let triedIndex = 0;
-      const tryNext = () => {
-        if (triedIndex < possibleSrcs.length) {
-          img.src = possibleSrcs[triedIndex++];
-        } else {
-          console.warn(`No se pudo cargar imagen para ${product.name}`);
-        }
-      };
-      tryNext(); // Intenta la primera alternativa
-      img.onerror = tryNext; // Si falla, intenta la siguiente
+    img.onload = () => {
+      imgContainer.style.backgroundImage = `url('${img.src}')`;
+      img.style.display = 'block';
     };
 
-    // Construir el innerHTML del card (sin img inline, la añadimos después)
+    img.onerror = function() {
+      console.warn(`No se pudo cargar imagen para ${product.name}`);
+      imgContainer.style.backgroundImage = `url('${baseUrl}/images/placeholder.png')`;
+    };
+
     card.innerHTML = `
       <div class="name">${product.name}</div>
       <div class="price">${isAdminAuthenticated ? `<span>${product.price}</span>` : product.price}</div>
@@ -315,8 +386,8 @@ function renderProducts(productsToRender) {
       </div>
     `;
 
-    // Insertar la img al inicio del card
-    card.insertBefore(img, card.firstChild);
+    card.insertBefore(imgContainer, card.firstChild);
+    imgContainer.appendChild(img);
 
     card.addEventListener('click', () => openProductModal(product));
     grid.appendChild(card);
@@ -324,7 +395,6 @@ function renderProducts(productsToRender) {
 
   console.log(`Renderizados ${productsToRender.length} productos`);
 }
-
 
 // ----------------- Product modal & helpers -----------------
 function openProductModal(product) {

@@ -32,16 +32,6 @@ app.get('/productos', async (req, res) => {
     }
 });
 
-app.get('/promociones', async (req, res) => {
-    try {
-        const pool = await connectionDB;
-        const result = await pool.request().query('SELECT * FROM Promocion'); // nombre de tabla en SQL
-        res.json(result.recordset);
-    } catch (err) {
-        console.error('Error al obtener promociones:', err);
-        res.status(500).send('Error en el servidor');
-    }
-});
 
 
 // --------------------
