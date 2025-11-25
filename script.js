@@ -100,14 +100,27 @@ async function fetchProducts() {
     if (!res.ok) throw new Error('Error al obtener productos del servidor');
     const data = await res.json();
 
+    console.log('Datos recibidos del servidor:', data); // Para debug
+
     products = data.map(row => {
-      const baseUrl = 'https://dc-phone.onrender.com';
+      // Construir la URL de la imagen correctamente
+      let imageUrl;
+      if (row.imagen) {
+        // Si la imagen ya es una URL completa
+        if (row.imagen.startsWith('http')) {
+          imageUrl = row.imagen;
+        } 
+        // Si es solo un nombre de archivo, construir la URL completa
+        else if (row.imagen.includes('/')) {
+          imageUrl = `${API_BASE}${row.imagen.startsWith('/') ? '' : '/'}${row.imagen}`;
+        }
+        else {
+          imageUrl = `${API_BASE}/images/${row.imagen}`;
+        }
+      } else {
+        imageUrl = `${API_BASE}/images/placeholder.png`;
+      }
 
-      let imgName = row.imagen || '';
-      let imageUrl = `${baseUrl}/images/${imgName}`;
-
-      const placeholder = `${baseUrl}/images/placeholder.png`;
-      
       return {
         id: String(row.id_producto),
         name: row.nombre || '',
@@ -116,16 +129,17 @@ async function fetchProducts() {
         price: row.precio ? `$${row.precio}` : '—',
         image: imageUrl,
         description: row.descripcion || '',
-        specs: [],
-        features: [],
+        specs: row.especificaciones ? JSON.parse(row.especificaciones) : [],
+        features: row.caracteristicas ? JSON.parse(row.caracteristicas) : [],
         stock: Number(row.stock) || 0,
         available: (String(row.esta_activo).toLowerCase() === 'true' || row.esta_activo === 1)
       };
     });
 
+    console.log('Productos procesados:', products); // Para debug
     renderProducts(products);
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching products:', err);
     grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--mid);">Error al obtener productos del servidor</p>';
   }
 }
@@ -137,9 +151,6 @@ function renderProducts(productsToRender) {
     return;
   }
 
-  const baseUrl = 'https://dc-phone.onrender.com';
-  const placeholder = `${baseUrl}/images/placeholder.png`;
-
   productsToRender.forEach(product => {
     const card = document.createElement('div');
     card.className = 'card';
@@ -147,55 +158,100 @@ function renderProducts(productsToRender) {
     card.style.flexDirection = 'column';
     card.style.alignItems = 'center';
     card.style.justifyContent = 'flex-start';
+    card.style.cursor = 'pointer';
+    card.style.transition = 'transform 0.2s ease';
+
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'translateY(-5px)';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'translateY(0)';
+    });
 
     // -------------------- Imagen --------------------
     const imgContainer = document.createElement('div');
     imgContainer.style.width = '100%';
     imgContainer.style.height = '200px';
-    imgContainer.style.backgroundColor = '#f0f0f0';
+    imgContainer.style.backgroundColor = '#f8f9fa';
     imgContainer.style.borderRadius = '8px';
     imgContainer.style.display = 'flex';
     imgContainer.style.alignItems = 'center';
     imgContainer.style.justifyContent = 'center';
     imgContainer.style.overflow = 'hidden';
+    imgContainer.style.padding = '10px';
+    imgContainer.style.boxSizing = 'border-box';
 
     const img = document.createElement('img');
-    img.src = product.image; // <-- usamos 'image' que ya tiene URL completa
+    img.src = product.image;
     img.alt = product.name;
     img.loading = 'lazy';
+    img.style.width = 'auto';
+    img.style.height = 'auto';
     img.style.maxWidth = '100%';
     img.style.maxHeight = '100%';
     img.style.objectFit = 'contain';
+    img.style.transition = 'transform 0.3s ease';
 
-    img.onerror = function () {
-      this.onerror = null;
-      this.src = product.placeholder;
+    // Manejo de errores de imagen
+    img.onerror = function() {
+      console.warn(`Error cargando imagen: ${product.image}`);
+      this.src = `${API_BASE}/images/placeholder.png`;
+      this.onerror = null; // Prevenir bucles infinitos
     };
 
     imgContainer.appendChild(img);
 
     // -------------------- Información --------------------
     const content = document.createElement('div');
-    content.style.padding = '10px';
+    content.style.padding = '15px 10px';
     content.style.textAlign = 'center';
     content.style.width = '100%';
     content.style.display = 'flex';
     content.style.flexDirection = 'column';
     content.style.alignItems = 'center';
+    content.style.gap = '8px';
 
-    content.innerHTML = `
-      <div class="name" style="min-height:48px; font-weight:600; display:flex; align-items:center; justify-content:center;">
-        ${product.name}
-      </div>
+    // Nombre
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'name';
+    nameDiv.style.minHeight = '48px';
+    nameDiv.style.fontWeight = '600';
+    nameDiv.style.display = 'flex';
+    nameDiv.style.alignItems = 'center';
+    nameDiv.style.justifyContent = 'center';
+    nameDiv.style.fontSize = '14px';
+    nameDiv.style.lineHeight = '1.3';
+    nameDiv.textContent = product.name;
 
-      <div class="price">
-        $${product.price ? product.price.replace('$','') : '—'}
-      </div>
+    // Precio
+    const priceDiv = document.createElement('div');
+    priceDiv.className = 'price';
+    priceDiv.style.fontSize = '16px';
+    priceDiv.style.fontWeight = '700';
+    priceDiv.style.color = '#2c5530';
+    priceDiv.textContent = product.price;
 
-      <div class="availability ${product.available ? 'available' : 'not-available'}">
-        ${product.available ? 'Disponible' : 'Agotado'}
-      </div>
-    `;
+    // Disponibilidad
+    const availabilityDiv = document.createElement('div');
+    availabilityDiv.className = `availability ${product.available ? 'available' : 'not-available'}`;
+    availabilityDiv.style.padding = '4px 8px';
+    availabilityDiv.style.borderRadius = '12px';
+    availabilityDiv.style.fontSize = '12px';
+    availabilityDiv.style.fontWeight = '600';
+    
+    if (product.available) {
+      availabilityDiv.style.backgroundColor = '#d4edda';
+      availabilityDiv.style.color = '#155724';
+    } else {
+      availabilityDiv.style.backgroundColor = '#f8d7da';
+      availabilityDiv.style.color = '#721c24';
+    }
+    
+    availabilityDiv.textContent = product.available ? 'Disponible' : 'Agotado';
+
+    content.appendChild(nameDiv);
+    content.appendChild(priceDiv);
+    content.appendChild(availabilityDiv);
 
     card.appendChild(imgContainer);
     card.appendChild(content);
@@ -207,7 +263,6 @@ function renderProducts(productsToRender) {
 
   console.log(`Renderizados ${productsToRender.length} productos`);
 }
-
 
 // Agregar producto (POST a backend)
 async function addProductToServer(prod) {
@@ -342,13 +397,39 @@ function openProductModal(product) {
   modalDescription.textContent = product.description || '';
   modalAvailability.textContent = product.available ? 'Disponible' : 'Agotado';
   modalAvailability.className = `availability ${product.available ? 'available' : 'not-available'}`;
+  
+  // Especificaciones
   modalSpecs.innerHTML = '';
-  (product.specs || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; modalSpecs.appendChild(li); });
+  if (product.specs && product.specs.length > 0) {
+    product.specs.forEach(s => { 
+      const li = document.createElement('li'); 
+      li.textContent = s; 
+      modalSpecs.appendChild(li); 
+    });
+  } else {
+    modalSpecs.innerHTML = '<li>No hay especificaciones disponibles</li>';
+  }
+  
+  // Características
   modalFeatures.innerHTML = '';
-  (product.features || []).forEach(f => { const li = document.createElement('li'); li.textContent = f; modalFeatures.appendChild(li); });
+  if (product.features && product.features.length > 0) {
+    product.features.forEach(f => { 
+      const li = document.createElement('li'); 
+      li.textContent = f; 
+      modalFeatures.appendChild(li); 
+    });
+  } else {
+    modalFeatures.innerHTML = '<li>No hay características disponibles</li>';
+  }
+  
   modalStock.textContent = `Stock: ${product.stock} unidades`;
-  modalImage.src = product.image || 'images/placeholder.png';
+  
+  // Imagen del modal con manejo de errores
+  modalImage.src = product.image;
   modalImage.alt = product.name;
+  modalImage.onerror = function() {
+    this.src = `${API_BASE}/images/placeholder.png`;
+  };
 
   isZoomed = false;
   modalImageWrap.classList.remove('zoomed');
@@ -369,8 +450,15 @@ function toggleZoom() {
   }
 }
 
-function openModal(modalId) { document.getElementById(modalId).classList.add('open'); document.body.classList.add('modal-open'); }
-function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); document.body.classList.remove('modal-open'); }
+function openModal(modalId) { 
+  document.getElementById(modalId).classList.add('open'); 
+  document.body.classList.add('modal-open'); 
+}
+
+function closeModal(modalId) { 
+  document.getElementById(modalId).classList.remove('open'); 
+  document.body.classList.remove('modal-open'); 
+}
 
 // ----------------- Filtros y edición -----------------
 function editProductPrice(productId) {
@@ -412,7 +500,8 @@ function filterProducts() {
   const filtered = products.filter(product => {
     const matchesSearch = (
       (product.name || '').toLowerCase().includes(searchTerm) ||
-      (product.description || '').toLowerCase().includes(searchTerm)
+      (product.description || '').toLowerCase().includes(searchTerm) ||
+      (product.brand || '').toLowerCase().includes(searchTerm)
     );
     const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(product.category);
     const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(product.brand);
@@ -601,6 +690,24 @@ function showAdminOptions() {
 function hideAdminOptions() {
   const addProductBtn = document.getElementById('addProductBtn');
   if (addProductBtn) addProductBtn.remove();
+}
+
+function showAdminPanel() {
+  document.getElementById('products-grid').style.display = 'none';
+  document.getElementById('promotionsContainer').classList.add('hidden');
+  const adminPanel = document.getElementById('admin-panel');
+  adminPanel.classList.remove('hidden');
+  
+  // Aquí puedes agregar la lógica para mostrar el panel de administración
+  adminPanel.innerHTML = `
+    <div style="padding: 20px;">
+      <h2>Panel de Administración</h2>
+      <p>Bienvenido al panel de administración.</p>
+      <button onclick="fetchProducts()" style="padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        Actualizar Productos
+      </button>
+    </div>
+  `;
 }
 
 // Check auth persisted
