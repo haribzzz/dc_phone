@@ -1,4 +1,4 @@
-// ---------- script.js (SISTEMA DC PHONE - SIMPLIFICADO) ----------
+// ---------- script.js (SISTEMA DC PHONE - CORREGIDO) ----------
 
 // Configuración
 const API_BASE = window.location.origin;
@@ -65,7 +65,6 @@ async function fetchProducts() {
         console.log('✅ Productos recibidos:', data.length);
 
         products = data.map(row => {
-            // Construir URL de imagen
             let imageUrl;
             if (row.imagen) {
                 if (row.imagen.startsWith('http')) {
@@ -197,7 +196,6 @@ function applyFilters() {
     const searchTerm = (searchInput?.value || '').toLowerCase();
     const selectedBrands = new Set();
     
-    // Obtener marcas seleccionadas
     categoryPanel.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
         selectedBrands.add(checkbox.value);
     });
@@ -219,36 +217,45 @@ function applyFilters() {
 
 // ----------------- INTERFAZ DE USUARIO -----------------
 function toggleSidebar() {
-    sidebar.classList.toggle('open');
-    sidebarOverlay.classList.toggle('active');
+    if (sidebar) sidebar.classList.toggle('open');
+    if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
 }
 
 function showCatalog() {
     document.getElementById('promotionsContainer')?.classList.add('hidden');
     document.getElementById('admin-panel')?.classList.add('hidden');
-    document.getElementById('products-grid').style.display = 'grid';
+    if (grid) grid.style.display = 'grid';
 }
 
 function toggleCategoryPanel() { 
-    categoryPanel.classList.toggle('hidden'); 
+    if (categoryPanel) categoryPanel.classList.toggle('hidden'); 
 }
 
 function openProductModal(product) {
-    modalName.textContent = product.name;
-    modalPrice.textContent = product.price;
-    modalDescription.textContent = product.description;
-    modalAvailability.textContent = product.available ? 'Disponible' : 'Agotado';
-    modalStock.textContent = `Stock: ${product.stock} unidades`;
+    if (modalName) modalName.textContent = product.name;
+    if (modalPrice) modalPrice.textContent = product.price;
+    if (modalDescription) modalDescription.textContent = product.description;
+    if (modalAvailability) modalAvailability.textContent = product.available ? 'Disponible' : 'Agotado';
+    if (modalStock) modalStock.textContent = `Stock: ${product.stock} unidades`;
     
-    modalImage.src = product.image;
-    modalImage.alt = product.name;
+    if (modalImage) {
+        modalImage.src = product.image;
+        modalImage.alt = product.name;
+    }
     
-    modal.classList.add('open');
+    if (modal) modal.classList.add('open');
     document.body.classList.add('modal-open');
 }
 
-function closeModal() { 
-    modal.classList.remove('open');
+function closeModal(modalId = null) { 
+    if (modalId) {
+        const specificModal = document.getElementById(modalId);
+        if (specificModal) specificModal.classList.remove('open');
+    } else {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.remove('open');
+        });
+    }
     document.body.classList.remove('modal-open');
 }
 
@@ -263,12 +270,14 @@ function checkAdminAuth() {
 
 function updateAdminUI() {
     const adminBtn = document.getElementById('adminBtn');
-    if (isAdminAuthenticated) {
-        adminBtn.innerHTML = '👑 Admin';
-        adminBtn.style.color = '#4CAF50';
-    } else {
-        adminBtn.innerHTML = '⚙️ Admin';
-        adminBtn.style.color = '';
+    if (adminBtn) {
+        if (isAdminAuthenticated) {
+            adminBtn.innerHTML = '👑 Admin';
+            adminBtn.style.color = '#4CAF50';
+        } else {
+            adminBtn.innerHTML = '⚙️ Admin';
+            adminBtn.style.color = '';
+        }
     }
 }
 
@@ -278,14 +287,18 @@ async function handleAdminSubmit(e) {
     const email = document.getElementById('adminEmail').value;
     const password = document.getElementById('adminPassword').value;
 
-    // Mostrar loading
+    if (!username || !email || !password) {
+        alert('❌ Por favor completa todos los campos');
+        return;
+    }
+
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = '⏳ Verificando...';
     submitBtn.disabled = true;
 
     try {
-        console.log('🔐 Intentando login en Render con:', username, email);
+        console.log('🔐 Intentando login con:', { username, email });
         
         const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
@@ -300,39 +313,34 @@ async function handleAdminSubmit(e) {
             })
         });
 
-        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+        console.log('📡 Status:', response.status, response.statusText);
 
-        // Verificar si la respuesta es JSON
         const contentType = response.headers.get('content-type');
         console.log('📋 Content-Type:', contentType);
         
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            console.error('❌ El servidor no devolvió JSON. Recibido:', text.substring(0, 200));
+            console.error('❌ No es JSON:', text.substring(0, 200));
             
-            // Si recibimos HTML, probablemente es un error 404 o 500
             if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-                throw new Error('El servidor está devolviendo una página de error. Verifica que la ruta /login exista en Render.');
-            } else {
-                throw new Error('Respuesta inesperada del servidor: ' + text.substring(0, 100));
+                throw new Error('Servidor no configurado. La ruta /login no existe en el servidor.');
             }
+            throw new Error('Error del servidor: ' + response.status);
         }
 
         const result = await response.json();
-        console.log('📊 Resultado del login:', result);
+        console.log('📊 Resultado:', result);
 
         if (result.success) {
             isAdminAuthenticated = true;
             localStorage.setItem('adminAuthenticated', 'true');
             localStorage.setItem('adminUser', username);
             updateAdminUI();
+            
             alert('✅ ' + result.message);
             e.target.reset();
             
-            // Cerrar modal admin
-            const adminModal = document.getElementById('admin-modal');
-            if (adminModal) adminModal.classList.remove('open');
-            
+            closeModal('admin-modal');
             showAdminPanel();
         } else {
             throw new Error(result.message || 'Credenciales incorrectas');
@@ -340,13 +348,19 @@ async function handleAdminSubmit(e) {
         
     } catch (error) {
         console.error('❌ Error en login:', error);
-        alert('❌ ' + error.message);
         
-        // Mostrar más detalles en consola
-        console.error('💡 Para debuggear:');
-        console.error('1. Verifica que tu servidor en Render tenga la ruta /login');
-        console.error('2. Revisa los logs de Render');
-        console.error('3. Prueba acceder a ' + API_BASE + '/health');
+        if (error.message.includes('no configurado')) {
+            alert('❌ El sistema de login no está disponible.\n\n' +
+                  'Para probar localmente:\n' +
+                  '1. Ejecuta: node server.js\n' + 
+                  '2. Ve a: http://localhost:3000\n\n' +
+                  'Credenciales:\n' +
+                  'Usuario: admin\n' +
+                  'Email: admin@dcphone.com\n' +
+                  'Contraseña: CieloAzul2025');
+        } else {
+            alert('❌ ' + error.message);
+        }
     } finally {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
@@ -354,41 +368,59 @@ async function handleAdminSubmit(e) {
 }
 
 function showAdminPanel() {
-    document.getElementById('products-grid').style.display = 'none';
+    if (grid) grid.style.display = 'none';
     document.getElementById('promotionsContainer')?.classList.add('hidden');
-    const adminPanel = document.getElementById('admin-panel');
-    adminPanel.classList.remove('hidden');
     
-    adminPanel.innerHTML = `
-        <div style="padding: 20px; text-align: center;">
-            <h2 style="color: #2c5530; margin-bottom: 20px;">👑 Panel de Administración</h2>
-            <p>Bienvenido, administrador</p>
-            <p>Productos totales: ${products.length}</p>
-            <button onclick="showCatalog()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px;">
-                Volver al Catálogo
-            </button>
-        </div>
-    `;
+    const adminPanel = document.getElementById('admin-panel');
+    if (adminPanel) {
+        adminPanel.classList.remove('hidden');
+        adminPanel.innerHTML = `
+            <div style="padding: 20px; text-align: center;">
+                <h2 style="color: #2c5530; margin-bottom: 20px;">👑 Panel de Administración</h2>
+                <p>Bienvenido, administrador!</p>
+                <p>Productos en sistema: ${products.length}</p>
+                <div style="margin-top: 20px;">
+                    <button onclick="showCatalog()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
+                        Volver al Catálogo
+                    </button>
+                    <button onclick="logoutAdmin()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function logoutAdmin() {
+    isAdminAuthenticated = false;
+    localStorage.removeItem('adminAuthenticated');
+    localStorage.removeItem('adminUser');
+    updateAdminUI();
+    showCatalog();
+    alert('👋 Sesión cerrada correctamente');
 }
 
 // ----------------- PROMOCIONES -----------------
-async function showPromotionsSection() {
-    document.getElementById('products-grid').style.display = 'none';
+function showPromotionsSection() {
+    if (grid) grid.style.display = 'none';
     document.getElementById('admin-panel')?.classList.add('hidden');
     
     const container = document.getElementById('promotionsContainer');
-    container.classList.remove('hidden');
-    container.innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-            <h2>🎯 Promociones</h2>
-            <p>Próximamente tendremos increíbles promociones</p>
-            ${isAdminAuthenticated ? `
-                <button onclick="openPromotionsModal()" style="margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Crear Promoción
-                </button>
-            ` : ''}
-        </div>
-    `;
+    if (container) {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <h2>🎯 Promociones</h2>
+                <p>Próximamente tendremos increíbles promociones</p>
+                ${isAdminAuthenticated ? `
+                    <button onclick="openPromotionsModal()" style="margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Crear Promoción
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }
 }
 
 function openPromotionsModal() {
@@ -442,8 +474,9 @@ function setupEventListeners() {
     if (adminBtn) adminBtn.addEventListener('click', (e) => { 
         e.preventDefault(); 
         toggleSidebar(); 
-        if (isAdminAuthenticated) showAdminPanel(); 
-        else {
+        if (isAdminAuthenticated) {
+            showAdminPanel();
+        } else {
             const adminModal = document.getElementById('admin-modal');
             if (adminModal) adminModal.classList.add('open');
         }
@@ -466,7 +499,20 @@ function setupEventListeners() {
 
     // Formulario admin
     const adminForm = document.getElementById('adminForm');
-    if (adminForm) adminForm.addEventListener('submit', handleAdminSubmit);
+    if (adminForm) {
+        adminForm.addEventListener('submit', handleAdminSubmit);
+        
+        // Agregar valores por defecto para testing
+        setTimeout(() => {
+            const adminUser = document.getElementById('adminUser');
+            const adminEmail = document.getElementById('adminEmail');
+            const adminPassword = document.getElementById('adminPassword');
+            
+            if (adminUser && !adminUser.value) adminUser.value = 'admin';
+            if (adminEmail && !adminEmail.value) adminEmail.value = 'admin@dcphone.com';
+            if (adminPassword && !adminPassword.value) adminPassword.value = 'CieloAzul2025';
+        }, 1000);
+    }
 }
 
 // ----------------- FUNCIONES GLOBALES -----------------
@@ -478,5 +524,7 @@ window.fetchProducts = fetchProducts;
 window.closeModal = closeModal;
 window.handleAdminSubmit = handleAdminSubmit;
 window.showAdminPanel = showAdminPanel;
+window.logoutAdmin = logoutAdmin;
+window.showCatalog = showCatalog;
 
 console.log('✅ script.js cargado correctamente');
