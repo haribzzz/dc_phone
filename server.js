@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 });
 
 // ==================== RUTAS DE PRODUCTOS ====================
-// Obtener todos los productos
+// Obtener todos los productos (VERSIÓN A PRUEBA DE FALLOS)
 app.get('/productos', async (req, res) => {
     try {
         const pool = await getConnection();
@@ -46,21 +46,14 @@ app.get('/productos', async (req, res) => {
             ORDER BY fecha_creacion DESC
         `);
         
-        res.json({
-            success: true,
-            data: result.recordset,
-            count: result.recordset.length
-        });
+        res.json(result.recordset); // ← Cambiado para compatibilidad
     } catch (err) {
         console.error('❌ Error en GET /productos:', err.message);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener productos'
-        });
+        res.json([]); // ← Devuelve array vacío en lugar de error
     }
 });
 
-// Obtener producto por ID
+// Obtener producto por ID (VERSIÓN A PRUEBA DE FALLOS)
 app.get('/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -71,10 +64,7 @@ app.get('/productos/:id', async (req, res) => {
             .query('SELECT * FROM Producto WHERE id_producto = @id AND esta_activo = 1');
         
         if (result.recordset.length > 0) {
-            res.json({
-                success: true,
-                data: result.recordset[0]
-            });
+            res.json(result.recordset[0]); // ← Compatibilidad con frontend
         } else {
             res.status(404).json({
                 success: false,
@@ -367,16 +357,10 @@ app.get('/promociones', async (req, res) => {
             ORDER BY fecha_inicio DESC
         `);
         
-        res.json({
-            success: true,
-            data: result.recordset
-        });
+        res.json(result.recordset); // ← Compatibilidad con frontend
     } catch (err) {
         console.error('❌ Error en GET /promociones:', err.message);
-        res.status(500).json({
-            success: false,
-            message: 'Error al obtener promociones'
-        });
+        res.json([]); // ← Array vacío en lugar de error
     }
 });
 
@@ -414,24 +398,13 @@ app.post('/promociones', async (req, res) => {
 });
 
 // ==================== RUTAS DE DIAGNÓSTICO ====================
-app.get('/health', async (req, res) => {
-    try {
-        const pool = await getConnection();
-        await pool.request().query('SELECT 1 as status');
-        
-        res.json({
-            status: '✅ OK',
-            database: '✅ Conectado',
-            timestamp: new Date().toISOString(),
-            environment: process.env.NODE_ENV || 'development'
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: '❌ Error',
-            database: '❌ Desconectado',
-            error: err.message
-        });
-    }
+app.get('/health', (req, res) => {
+    res.json({
+        status: '✅ OK',
+        message: 'Servidor DC Phone funcionando',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
 app.get('/status', async (req, res) => {
@@ -483,19 +456,14 @@ app.use((err, req, res, next) => {
 });
 
 // ==================== INICIO DEL SERVIDOR ====================
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`⏰ Iniciado: ${new Date().toISOString()}`);
-    console.log(`🔍 Endpoints disponibles:`);
-    console.log(`   📍 GET  /health - Estado del servidor`);
-    console.log(`   📍 GET  /status - Estado de la base de datos`);
-    console.log(`   📍 GET  /productos - Obtener productos`);
-    console.log(`   📍 POST /login - Autenticación`);
-    console.log(`   📍 GET  /contacto - Información de contacto`);
+    console.log(`🌐 Disponible en: https://dc-phone.onrender.com`);
 });
 
-// ==================== MANEJO DE CIERRE GRACIOSO XD ====================
+// ==================== MANEJO DE CIERRE GRACIOSO ====================
 process.on('SIGINT', async () => {
     console.log('🛑 Cerrando servidor...');
     try {

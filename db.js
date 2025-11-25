@@ -1,4 +1,4 @@
-// db.js - CONFIGURACIÓN CORREGIDA PARA SOMEE
+// db.js - CONFIGURACIÓN CORREGIDA
 const sql = require('mssql');
 
 const config = {
@@ -8,31 +8,22 @@ const config = {
     database: 'dc_phone_db',
     options: {
         encrypt: true,                    // SSL requerido
-        trustServerCertificate: true,     // ⚠️ CAMBIA A true PARA SOMEE
+        trustServerCertificate: true,     // ⚠️ TRUE para Somee
         enableArithAbort: true,
         connectTimeout: 30000,
         requestTimeout: 30000
     }
 };
 
-// Conexión mejorada que no crashea el servidor
 const getConnection = async () => {
     try {
-        console.log('🔗 Intentando conectar a Somee...');
         const pool = await sql.connect(config);
-        console.log('✅ CONECTADO A SOMEE - SSL configurado correctamente');
+        console.log('✅ CONECTADO A SOMEE');
         return pool;
     } catch (err) {
-        console.error('❌ ERROR DE CONEXIÓN:', err.message);
-        console.log('💡 El servidor continuará pero sin base de datos');
-        // No relanzamos el error para que el servidor no crashee
+        console.error('❌ Error BD:', err.message);
         throw err;
     }
 };
 
-// Exportar sin probar conexión al inicio
-module.exports = { 
-    sql, 
-    getConnection,
-    config 
-};
+module.exports = { sql, getConnection, config };
