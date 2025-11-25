@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { sql, getConnection } = require('./db'); // Asegúrate de tener este archivo
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,14 +17,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// ==================== RUTA LOGIN (DEBE IR PRIMERO) ====================
+// ==================== RUTA LOGIN ====================
 app.post('/login', async (req, res) => {
     const { nombre_usuario, password, email } = req.body;
 
     console.log('🔐 Intento de login para:', { nombre_usuario, email });
-    console.log('📧 Datos recibidos:', { nombre_usuario, email, password: '***' });
 
-    // Usuario válido
     const validUser = {
         username: 'admin',
         password: 'CieloAzul2025',
@@ -31,7 +30,6 @@ app.post('/login', async (req, res) => {
     };
 
     try {
-        // Verificación con usuario, email y contraseña
         if (nombre_usuario === validUser.username && 
             password === validUser.password &&
             email === validUser.email) {
@@ -50,9 +48,6 @@ app.post('/login', async (req, res) => {
             });
         } else {
             console.log('❌ Credenciales incorrectas');
-            console.log('❌ Esperado:', validUser);
-            console.log('❌ Recibido:', { nombre_usuario, email, password });
-            
             res.status(401).json({ 
                 success: false, 
                 message: 'Usuario, email o contraseña incorrectos' 
@@ -68,26 +63,30 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// ==================== RUTAS DE PRODUCTOS ====================
+// ==================== RUTAS DE PRODUCTOS (CON BASE DE DATOS REAL) ====================
 app.get('/productos', async (req, res) => {
     try {
-        console.log('🔍 Solicitando productos...');
-        // Simulamos datos para prueba
-        const productos = [
-            {
-                id_producto: 1,
-                nombre: "iPhone 15",
-                marca: "Apple",
-                precio: 999.99,
-                stock: 10,
-                descripcion: "Último modelo iPhone",
-                imagen: "/images/iphone15.jpg",
-                esta_activo: 1
-            }
-        ];
+        console.log('🔍 Solicitando productos desde BD...');
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT 
+                id_producto,
+                nombre,
+                marca,
+                modelo,
+                precio,
+                stock,
+                descripcion,
+                imagen,
+                esta_activo,
+                fecha_creacion
+            FROM Producto 
+            WHERE esta_activo = 1
+            ORDER BY fecha_creacion DESC
+        `);
         
-        console.log(`✅ ${productos.length} productos encontrados`);
-        res.json(productos);
+        console.log(`✅ ${result.recordset.length} productos encontrados en BD`);
+        res.json(result.recordset);
     } catch (err) {
         console.error('❌ Error en GET /productos:', err.message);
         res.status(500).json({
@@ -107,18 +106,40 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.get('/status', (req, res) => {
-    res.json({
-        status: '✅ ONLINE',
-        serverTime: new Date().toISOString()
-    });
+app.get('/status', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        
+        const dbInfo = await pool.request()
+            .query('SELECT DB_NAME() as dbname');
+            
+        const counts = await pool.request()
+            .query(`
+                SELECT 'Producto' as tabla, COUNT(*) as total FROM Producto WHERE esta_activo = 1
+                UNION ALL SELECT 'Usuario' as tabla, COUNT(*) as total FROM Usuario WHERE esta_activo = 1
+                UNION ALL SELECT 'Promocion' as tabla, COUNT(*) as total FROM Promocion WHERE esta_activa = 1
+            `);
+        
+        res.json({
+            status: '✅ ONLINE',
+            database: dbInfo.recordset[0].dbname,
+            counts: counts.recordset,
+            serverTime: new Date().toISOString()
+        });
+        
+    } catch (err) {
+        res.status(500).json({
+            status: '❌ OFFLINE', 
+            error: err.message
+        });
+    }
 });
 
-// ==================== ARCHIVOS ESTÁTICOS (AL FINAL) ====================
+// ==================== ARCHIVOS ESTÁTICOS ====================
 app.use(express.static(path.join(__dirname)));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// Ruta principal - ÚLTIMA
+// Ruta principal
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
