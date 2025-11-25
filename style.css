@@ -1,123 +1,155 @@
-/* ==================== MEJORAS CSS MANTENIENDO TU PALETA ==================== */
+/* ==================== MODAL SIMPLIFICADO (SIN ESPECIFICACIONES) ==================== */
 
-/* Mejora las tarjetas de productos */
-.card {
-    background: var(--card-grad);
+.modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.modal-image-section {
+    position: relative;
+}
+
+.modal-image-section img {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+    background: var(--bg);
     border-radius: 12px;
-    padding: 16px;
-    text-align: center;
-    cursor: pointer;
-    border: 1px solid rgba(82,43,91,0.12);
-    box-shadow: var(--shadow);
-    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 8px 24px rgba(25,0,25,0.1);
+}
+
+.modal-info-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    min-width: 0;
-    max-width: 240px;
-    margin: 0 auto;
-    position: relative;
-    overflow: hidden;
+    gap: 20px;
 }
 
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 32px rgba(25,0,25,0.15);
-    border-color: rgba(133,79,108,0.3);
+.modal-section {
+    background: rgba(255,255,255,0.7);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(133,79,108,0.1);
+    box-shadow: 0 4px 12px rgba(25,0,25,0.05);
 }
 
-.card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.6s ease;
-}
-
-.card:hover::before {
-    left: 100%;
-}
-
-/* Mejora imágenes de productos */
-.card img {
-    width: 100%;
-    aspect-ratio: 3/4;
-    height: auto;
-    max-height: 260px;
-    min-height: 200px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.05);
-    background: var(--glass);
-    transition: transform 0.3s ease;
-}
-
-.card:hover img {
-    transform: scale(1.05);
-}
-
-/* Mejora información de la tarjeta */
-.card .name {
-    font-size: 15px;
+.modal-section h4 {
     color: var(--deep);
+    margin: 0 0 12px 0;
+    font-size: 18px;
     font-weight: 700;
-    line-height: 1.3;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
 }
 
-.card .price {
-    color: var(--accent);
-    font-weight: 800;
+#modal-description {
+    line-height: 1.6;
+    color: var(--dark);
+    font-size: 15px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#modal-description::-webkit-scrollbar {
+    width: 6px;
+}
+
+#modal-description::-webkit-scrollbar-track {
+    background: rgba(133,79,108,0.1);
+    border-radius: 3px;
+}
+
+#modal-description::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+}
+
+#modal-stock {
     font-size: 16px;
-    background: rgba(133,79,108,0.08);
-    padding: 6px 12px;
-    border-radius: 20px;
+    font-weight: 600;
+    color: var(--deep);
+    padding: 8px 12px;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 8px;
     display: inline-block;
 }
 
-/* Mejora estados de disponibilidad */
-.availability {
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+/* Mejora para el modal de promociones */
+#promotions-modal .modal-content {
+    max-width: 600px;
+    grid-template-columns: 1fr;
 }
 
-.available {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(21, 128, 61, 0.1));
-    color: #166534;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+.form-group {
+    margin-bottom: 20px;
 }
 
-.not-available {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.1));
-    color: #991b1b;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--deep);
 }
 
-/* ==================== MEJORA BANNERS DE PROMOCIONES ==================== */
-.promo-banner {
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid rgba(133,79,108,0.15);
+    border-radius: 10px;
+    font-size: 15px;
+    background: rgba(255,255,255,0.9);
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(133,79,108,0.15);
+    outline: none;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Responsive para modal */
+@media (max-width: 768px) {
+    .modal-body {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .modal-image-section img {
+        height: 300px;
+    }
+    
+    .modal-content {
+        padding: 20px;
+        margin: 10px;
+    }
+}
+
+/* Estilos para las tarjetas de promociones en el grid */
+.promo-card {
     background: linear-gradient(135deg, var(--accent) 0%, var(--mid) 100%);
     color: var(--soft);
-    padding: 30px;
+    padding: 25px;
     border-radius: 16px;
-    margin: 20px 0;
+    margin: 15px 0;
     box-shadow: 0 8px 32px rgba(43,18,76,0.2);
     position: relative;
     overflow: hidden;
     border: none;
-    text-align: center;
 }
 
-.promo-banner::before {
+.promo-card::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -129,231 +161,74 @@
     animation: shine 3s infinite;
 }
 
-@keyframes shine {
-    0% { transform: translateX(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) rotate(45deg); }
-}
-
-.promo-banner h3 {
-    font-size: 1.6em;
+.promo-card h3 {
+    font-size: 1.5em;
     margin-bottom: 12px;
     font-weight: 700;
     color: var(--bg);
     text-shadow: 0 2px 4px rgba(25,0,25,0.3);
 }
 
-.promo-banner p {
-    font-size: 1.1em;
-    margin-bottom: 15px;
-    opacity: 0.95;
-}
-
-.promo-banner .discount {
+.promo-card .discount {
     background: var(--soft);
     color: var(--deep);
     padding: 10px 20px;
     border-radius: 25px;
     font-weight: 800;
-    font-size: 1.3em;
+    font-size: 1.4em;
     display: inline-block;
     margin: 12px 0;
     box-shadow: 0 6px 20px rgba(223,182,178,0.4);
     border: 2px solid var(--bg);
 }
 
-/* ==================== MEJORA MODALES ==================== */
-.modal-content {
-    background: linear-gradient(180deg, #fff, var(--bg));
-    border-radius: 16px;
-    max-width: 1000px;
-    width: 100%;
-    max-height: 92vh;
-    overflow: auto;
-    padding: 25px;
-    box-shadow: 0 25px 60px rgba(9,3,9,0.4);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-    position: relative;
-    border: 1px solid rgba(133,79,108,0.1);
+/* Estados de stock mejorados */
+.stock-low {
+    background: rgba(234, 179, 8, 0.15);
+    color: #854d0e;
+    border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
-.modal-left img {
-    width: 100%;
-    height: 380px;
-    object-fit: contain;
-    background: var(--bg);
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 8px 24px rgba(25,0,25,0.1);
+.stock-out {
+    background: rgba(239, 68, 68, 0.15);
+    color: #991b1b;
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.modal-right h3 {
-    margin: 0 0 8px 0;
-    color: var(--deep);
-    font-size: 1.5em;
+/* Mejora para botones de admin en tarjetas */
+.admin-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
 }
 
-.modal-right .price {
-    font-size: 22px;
-    color: var(--accent);
-    font-weight: 800;
-    margin-bottom: 8px;
-    background: rgba(133,79,108,0.1);
-    padding: 8px 16px;
-    border-radius: 12px;
-    display: inline-block;
-}
-
-/* ==================== MEJORA BOTONES ==================== */
-button {
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
+.admin-buttons button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(25,0,25,0.15);
-}
-
-/* Botones de administración */
-.admin-btn {
-    background: linear-gradient(135deg, var(--accent), var(--mid));
-    color: var(--soft);
-    border-radius: 10px;
-    font-weight: 700;
-    padding: 10px 16px;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-.admin-btn:hover {
-    background: linear-gradient(135deg, var(--mid), var(--deep));
-    box-shadow: 0 8px 25px rgba(43,18,76,0.3);
-}
-
-/* ==================== MEJORA BARRA DE BÚSQUEDA ==================== */
-.search-container {
-    background: var(--glass);
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(25,0,25,0.08);
-    padding: 20px;
-    margin: 20px 0;
-    border: 1px solid rgba(133,79,108,0.1);
-    backdrop-filter: blur(10px);
-}
-
-.search-bar input[type="search"] {
-    flex: 0 1 65%;
-    max-width: 720px;
-    min-width: 320px;
-    padding: 14px 20px;
-    border: 2px solid rgba(133,79,108,0.15);
-    border-radius: 999px;
-    outline: none;
-    background: rgba(255,255,255,0.95);
-    box-shadow: 0 6px 20px rgba(25,0,25,0.08);
-    font-size: 16px;
-    color: var(--dark);
-    transition: all 0.3s ease;
-}
-
-.search-bar input[type="search"]:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(133,79,108,0.15);
-    transform: translateY(-2px);
-}
-
-/* ==================== MEJORA PANEL DE CATEGORÍAS ==================== */
-.category-panel {
-    background: var(--glass);
-    border-radius: 16px;
-    box-shadow: 0 12px 32px rgba(25,0,25,0.15);
-    border: 1px solid rgba(133,79,108,0.1);
-    backdrop-filter: blur(10px);
-    padding: 20px;
-}
-
-/* ==================== MEJORA GRID DE PRODUCTOS ==================== */
-#products-grid {
-    gap: 20px;
-    padding: 20px 0;
-}
-
-/* ==================== RESPONSIVE MEJORADO ==================== */
-@media (max-width: 1200px) {
-    #products-grid { grid-template-columns: repeat(4, 1fr); }
-    .modal-content { grid-template-columns: 1fr; gap: 20px; }
-}
-
-@media (max-width: 900px) {
-    #products-grid { grid-template-columns: repeat(3, 1fr); }
-    .card { max-width: 100%; }
-}
-
-@media (max-width: 700px) {
-    #products-grid { grid-template-columns: repeat(2, 1fr); }
-    .promo-banner { padding: 20px; margin: 15px; }
-}
-
-@media (max-width: 480px) {
-    #products-grid { grid-template-columns: 1fr; }
-    .card img { max-height: 240px; min-height: 160px; }
-    .search-bar input[type="search"] { min-width: 250px; }
-}
-
-/* ==================== EFECTOS DE CARGA MEJORADOS ==================== */
-.loading {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-    border-radius: 8px;
-}
-
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* ==================== BOTONES DE ACCIÓN MEJORADOS ==================== */
-.buy-btn {
-    display: inline-block;
-    margin-top: 15px;
-    padding: 12px 24px;
-    background: linear-gradient(135deg, var(--accent), #a86b8b);
-    color: var(--bg);
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 800;
-    box-shadow: 0 8px 24px rgba(133,79,108,0.25);
-    transition: all 0.3s ease;
     border: none;
     cursor: pointer;
-}
-
-.buy-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 32px rgba(133,79,108,0.35);
-    background: linear-gradient(135deg, #a86b8b, var(--accent));
-}
-
-/* Close button mejorado */
-.close-btn {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    background: rgba(25,0,25,0.08);
-    color: var(--dark);
-    border-radius: 10px;
-    padding: 8px 12px;
-    cursor: pointer;
-    border: none;
-    font-weight: 700;
     transition: all 0.3s ease;
 }
 
-.close-btn:hover {
-    background: rgba(25,0,25,0.15);
-    transform: rotate(90deg);
+.admin-buttons button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-edit {
+    background: #fbbf24;
+    color: #000;
+}
+
+.btn-toggle {
+    background: #10b981;
+    color: white;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
 }

@@ -25,7 +25,8 @@ app.get('/', (req, res) => {
 });
 
 // ==================== RUTAS DE PRODUCTOS ====================
-// Obtener todos los productos (VERSIÓN A PRUEBA DE FALLOS)
+
+// Obtener todos los productos
 app.get('/productos', async (req, res) => {
     try {
         const pool = await getConnection();
@@ -46,14 +47,14 @@ app.get('/productos', async (req, res) => {
             ORDER BY fecha_creacion DESC
         `);
         
-        res.json(result.recordset); // ← Cambiado para compatibilidad
+        res.json(result.recordset);
     } catch (err) {
         console.error('❌ Error en GET /productos:', err.message);
-        res.json([]); // ← Devuelve array vacío en lugar de error
+        res.json([]);
     }
 });
 
-// Obtener producto por ID (VERSIÓN A PRUEBA DE FALLOS)
+// Obtener producto por ID
 app.get('/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -64,7 +65,7 @@ app.get('/productos/:id', async (req, res) => {
             .query('SELECT * FROM Producto WHERE id_producto = @id AND esta_activo = 1');
         
         if (result.recordset.length > 0) {
-            res.json(result.recordset[0]); // ← Compatibilidad con frontend
+            res.json(result.recordset[0]);
         } else {
             res.status(404).json({
                 success: false,
@@ -347,6 +348,8 @@ app.put('/contacto/:id', async (req, res) => {
 });
 
 // ==================== RUTAS DE PROMOCIONES ====================
+
+// Obtener todas las promociones activas
 app.get('/promociones', async (req, res) => {
     try {
         const pool = await getConnection();
@@ -357,10 +360,10 @@ app.get('/promociones', async (req, res) => {
             ORDER BY fecha_inicio DESC
         `);
         
-        res.json(result.recordset); // ← Compatibilidad con frontend
+        res.json(result.recordset);
     } catch (err) {
         console.error('❌ Error en GET /promociones:', err.message);
-        res.json([]); // ← Array vacío en lugar de error
+        res.json([]);
     }
 });
 
@@ -369,14 +372,30 @@ app.post('/promociones', async (req, res) => {
     try {
         const { nombre, descripcion, descuento, fecha_inicio, fecha_fin, id_producto } = req.body;
         
+        // Validaciones básicas
+        if (!nombre || !descuento || !fecha_inicio || !fecha_fin) {
+            return res.status(400).json({
+                success: false,
+                message: 'Nombre, descuento, fecha_inicio y fecha_fin son obligatorios'
+            });
+        }
+
+        if (descuento < 1 || descuento > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'El descuento debe estar entre 1% y 100%'
+            });
+        }
+
         const pool = await getConnection();
         const query = `
             INSERT INTO Promocion (nombre, descripcion, descuento, fecha_inicio, fecha_fin, id_producto)
+            OUTPUT INSERTED.*
             VALUES (@nombre, @descripcion, @descuento, @fecha_inicio, @fecha_fin, @id_producto)
         `;
         
         const result = await pool.request()
-            .input('nombre', sql.VarChar, nombre)
+            .input('nombre', sql.VarChar(150), nombre)
             .input('descripcion', sql.Text, descripcion || '')
             .input('descuento', sql.Decimal(5,2), descuento)
             .input('fecha_inicio', sql.DateTime, fecha_inicio)
@@ -384,15 +403,125 @@ app.post('/promociones', async (req, res) => {
             .input('id_producto', sql.Int, id_producto || null)
             .query(query);
         
+        const nuevaPromocion = result.recordset[0];
+        
         res.status(201).json({
             success: true,
-            message: '✅ Promoción creada correctamente'
+            message: '✅ Promoción creada correctamente',
+            data: nuevaPromocion
         });
     } catch (err) {
         console.error('❌ Error en POST /promociones:', err.message);
         res.status(500).json({
             success: false,
-            message: 'Error al crear promoción'
+            message: 'Error al crear promoción: ' + err.message
+        });
+    }
+});
+
+// Actualizar promoción
+app.put('/promociones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, descripcion, descuento, fecha_inicio, fecha_fin, id_producto, esta_activa } = req.body;
+        
+        const pool = await getConnection();
+        const query = `
+            UPDATE Promocion 
+            SET nombre = @nombre,
+                descripcion = @descripcion,
+                descuento = @descuento,
+                fecha_inicio = @fecha_inicio,
+                fecha_fin = @fecha_fin,
+                id_producto = @id_producto,
+                esta_activa = @esta_activa
+            WHERE id_promocion = @id
+        `;
+        
+        const result = await pool.request()
+            .input('nombre', sql.VarChar(150), nombre)
+            .input('descripcion', sql.Text, descripcion || '')
+            .input('descuento', sql.Decimal(5,2), descuento)
+            .input('fecha_inicio', sql.DateTime, fecha_inicio)
+            .input('fecha_fin', sql.DateTime, fecha_fin)
+            .input('id_producto', sql.Int, id_producto || null)
+            .input('esta_activa', sql.Bit, esta_activa !== undefined ? esta_activa : 1)
+            .input('id', sql.Int, id)
+            .query(query);
+        
+        if (result.rowsAffected[0] > 0) {
+            res.json({
+                success: true,
+                message: '✅ Promoción actualizada correctamente'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: '❌ Promoción no encontrada'
+            });
+        }
+    } catch (err) {
+        console.error('❌ Error en PUT /promociones/:id:', err.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error al actualizar promoción'
+        });
+    }
+});
+
+// Eliminar promoción
+app.delete('/promociones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+        
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query('DELETE FROM Promocion WHERE id_promocion = @id');
+        
+        if (result.rowsAffected[0] > 0) {
+            res.json({
+                success: true,
+                message: '✅ Promoción eliminada correctamente'
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                message: '❌ Promoción no encontrada'
+            });
+        }
+    } catch (err) {
+        console.error('❌ Error en DELETE /promociones/:id:', err.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar promoción'
+        });
+    }
+});
+
+// Obtener promoción por ID
+app.get('/promociones/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+        
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT * FROM Promocion WHERE id_promocion = @id');
+        
+        if (result.recordset.length > 0) {
+            res.json(result.recordset[0]);
+        } else {
+            res.status(404).json({
+                success: false,
+                message: 'Promoción no encontrada'
+            });
+        }
+    } catch (err) {
+        console.error('❌ Error en GET /promociones/:id:', err.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener la promoción'
         });
     }
 });
@@ -438,11 +567,12 @@ app.get('/status', async (req, res) => {
 });
 
 // ==================== MANEJO DE ERRORES ====================
-// Ruta no encontrada
+
+// Ruta no encontrada - CORREGIDO
 app.use((req, res) => {
     res.status(404).json({
         success: false,
-        message: 'Ruta no encontrada'
+        message: `Ruta no encontrada: ${req.method} ${req.originalUrl}`
     });
 });
 
@@ -460,7 +590,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`⏰ Iniciado: ${new Date().toISOString()}`);
-    console.log(`🌐 Disponible en: https://dc-phone.onrender.com`);
+    console.log(`🌐 Disponible en: http://localhost:${PORT}`);
 });
 
 // ==================== MANEJO DE CIERRE GRACIOSO ====================
