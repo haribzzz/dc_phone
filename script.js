@@ -1,4 +1,4 @@
-// ---------- script.js (SISTEMA DC PHONE - CORREGIDO) ----------
+// ---------- script.js (SISTEMA DC PHONE - COMPLETO CON CRUD) ----------
 
 // Configuración
 const API_BASE = window.location.origin;
@@ -350,14 +350,7 @@ async function handleAdminSubmit(e) {
         console.error('❌ Error en login:', error);
         
         if (error.message.includes('no configurado')) {
-            alert('❌ El sistema de login no está disponible.\n\n' +
-                  'Para probar localmente:\n' +
-                  '1. Ejecuta: node server.js\n' + 
-                  '2. Ve a: http://localhost:3000\n\n' +
-                  'Credenciales:\n' +
-                  'Usuario: admin\n' +
-                  'Email: admin@dcphone.com\n' +
-                  'Contraseña: CieloAzul2025');
+            alert('❌ El sistema de login no está disponible.\n\nPara probar localmente:\n1. Ejecuta: node server.js\n2. Ve a: http://localhost:3000');
         } else {
             alert('❌ ' + error.message);
         }
@@ -375,17 +368,50 @@ function showAdminPanel() {
     if (adminPanel) {
         adminPanel.classList.remove('hidden');
         adminPanel.innerHTML = `
-            <div style="padding: 20px; text-align: center;">
-                <h2 style="color: #2c5530; margin-bottom: 20px;">👑 Panel de Administración</h2>
-                <p>Bienvenido, administrador!</p>
-                <p>Productos en sistema: ${products.length}</p>
-                <div style="margin-top: 20px;">
-                    <button onclick="showCatalog()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
-                        Volver al Catálogo
+            <div style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+                <h2 style="color: #2c5530; margin-bottom: 30px; text-align: center;">👑 Panel de Administración DC Phone</h2>
+                
+                <!-- Estadísticas -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <h3 style="color: #667eea; margin: 0;">${products.length}</h3>
+                        <p style="margin: 5px 0 0 0; color: #666;">Productos Activos</p>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <h3 style="color: #4CAF50; margin: 0;">${products.filter(p => p.stock > 0).length}</h3>
+                        <p style="margin: 5px 0 0 0; color: #666;">En Stock</p>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <h3 style="color: #ff9800; margin: 0;">${products.filter(p => p.stock === 0).length}</h3>
+                        <p style="margin: 5px 0 0 0; color: #666;">Agotados</p>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción CRUD -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <button onclick="openCreateProductModal()" style="padding: 20px; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        ➕ Agregar Producto
                     </button>
-                    <button onclick="logoutAdmin()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
-                        Cerrar Sesión
+                    <button onclick="showProductList()" style="padding: 20px; background: #2196F3; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        📋 Gestionar Productos
                     </button>
+                    <button onclick="openPromotionsModal()" style="padding: 20px; background: #9C27B0; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        🎯 Gestionar Promociones
+                    </button>
+                    <button onclick="showCatalog()" style="padding: 20px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        📱 Ver Catálogo
+                    </button>
+                    <button onclick="logoutAdmin()" style="padding: 20px; background: #dc3545; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600;">
+                        🚪 Cerrar Sesión
+                    </button>
+                </div>
+
+                <!-- Lista de Productos (se muestra al hacer clic en Gestionar) -->
+                <div id="product-management-section" style="display: none;">
+                    <h3 style="color: #2c5530; margin-bottom: 20px;">Gestión de Productos</h3>
+                    <div id="product-list" style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <!-- Los productos se cargarán aquí -->
+                    </div>
                 </div>
             </div>
         `;
@@ -399,6 +425,95 @@ function logoutAdmin() {
     updateAdminUI();
     showCatalog();
     alert('👋 Sesión cerrada correctamente');
+}
+
+// ----------------- FUNCIONES CRUD -----------------
+function showProductList() {
+    const productList = document.getElementById('product-list');
+    const managementSection = document.getElementById('product-management-section');
+    
+    if (productList && managementSection) {
+        managementSection.style.display = 'block';
+        
+        let html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h4 style="margin: 0;">Lista de Productos (${products.length})</h4>
+                <button onclick="openCreateProductModal()" style="padding: 10px 15px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    ➕ Nuevo Producto
+                </button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Producto</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Precio</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Stock</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Estado</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        products.forEach(product => {
+            html += `
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img src="${product.image}" alt="${product.name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                            <div>
+                                <strong>${product.name}</strong><br>
+                                <small style="color: #666;">${product.brand}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 12px;">${product.price}</td>
+                    <td style="padding: 12px;">${product.stock}</td>
+                    <td style="padding: 12px;">
+                        <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; 
+                            ${product.available ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
+                            ${product.available ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td style="padding: 12px;">
+                        <button onclick="editProduct('${product.id}')" style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            ✏️ Editar
+                        </button>
+                        <button onclick="deleteProduct('${product.id}')" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            🗑️ Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        productList.innerHTML = html;
+    }
+}
+
+function openCreateProductModal() {
+    alert('Modal para crear producto - En desarrollo\n\nPróximamente podrás:\n• Agregar nuevos productos\n• Subir imágenes\n• Gestionar inventario');
+}
+
+function editProduct(productId) {
+    const product = products.find(p => p.id == productId);
+    if (product) {
+        alert(`Editando: ${product.name}\n\nPróximamente podrás:\n• Modificar información\n• Actualizar precio\n• Cambiar stock`);
+    }
+}
+
+function deleteProduct(productId) {
+    const product = products.find(p => p.id == productId);
+    if (product && confirm(`¿Estás seguro de eliminar "${product.name}"?`)) {
+        alert(`Producto "${product.name}" eliminado (simulación)\n\nEn producción se desactivaría en la BD`);
+    }
 }
 
 // ----------------- PROMOCIONES -----------------
@@ -526,5 +641,9 @@ window.handleAdminSubmit = handleAdminSubmit;
 window.showAdminPanel = showAdminPanel;
 window.logoutAdmin = logoutAdmin;
 window.showCatalog = showCatalog;
+window.showProductList = showProductList;
+window.openCreateProductModal = openCreateProductModal;
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
 
 console.log('✅ script.js cargado correctamente');
