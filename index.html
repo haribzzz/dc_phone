@@ -605,7 +605,7 @@
     </div>
 
     <!-- Modal para Admin -->
-    <div id="admin-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+     <div id="admin-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="modal-content" style="max-width: 500px; grid-template-columns: 1fr;">
         <button class="close-btn" onclick="closeModal('admin-modal')">X</button>
         <div>
@@ -613,24 +613,28 @@
           <form id="adminForm">
             <div class="form-group">
               <label for="adminUser">Usuario:</label>
-              <input type="text" id="adminUser" required>
+              <input type="text" id="adminUser" required value="admin">
             </div>
             <div class="form-group">
               <label for="adminEmail">Gmail:</label>
-              <input type="email" id="adminEmail" required>
+              <input type="email" id="adminEmail" required value="admin@dcphone.com">
             </div>
             <div class="form-group">
               <label for="adminPassword">Contraseña:</label>
-              <input type="password" id="adminPassword" required>
+              <input type="password" id="adminPassword" required value="CieloAzul2025">
             </div>
             <div class="form-actions">
               <button type="button" class="btn btn-secondary" onclick="closeModal('admin-modal')">Cancelar</button>
               <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
             </div>
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 12px;">
+              <strong>Credenciales pre-cargadas para testing</strong>
+            </div>
           </form>
         </div>
       </div>
     </div>
+    
   </main>
 
   <footer>
